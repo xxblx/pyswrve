@@ -5,11 +5,12 @@ from distutils.core import setup
 setup(
     name = 'pyswrve',
     version = '0.1',
+    license='MIT License',
     
     author = 'Oleg Kozlov (xxblx)',
     author_email = 'olkozlov@playrix.com',
     
-    description = 'Python wrapper for Swrve Export API',
+    description = 'Unofficial Python wrapper for Swrve Export API',
     
     requires = ['requests', 'psycopg2'],
 
@@ -20,6 +21,7 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Operating System :: POSIX :: Linux',
         'Topic :: Software Development :: Libraries :: Python Modules',
+        'License :: OSI Approved :: MIT License',
     ],
     keywords='swrve swrve.com export api wrapper'
 )
