@@ -56,4 +56,5 @@ Additional info
 ===============
 
 If you have any questions feel free to contact with me: olkozlov@playrix.com. 
-    
+
+Oleg Kozlov (xxblx), 2015
