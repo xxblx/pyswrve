@@ -48,7 +48,9 @@ After this you don't need to set api key and personal key on object creation.
     # payload "player_level" for 25 level since Jan 31 2015 up to Mar 15 2015
     # as dict where key is payload value (25) and value is list with list-elements
     # like {'25': [['D-2015-01-31', 126.00], ['D-2015-02-01', 176.00]]}
-    
+
+`Check wiki for details <https://github.com/xxblx/pyswrve/wiki>`_. 
+
 
 Additional info
 ===============
