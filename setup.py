@@ -12,7 +12,7 @@ setup(
     
     description = 'Unofficial Python wrapper for Swrve Export API',
     
-    requires = ['requests', 'psycopg2'],
+    requires = ['requests'],
 
     packages = ['pyswrve'],
     
