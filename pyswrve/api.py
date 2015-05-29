@@ -184,18 +184,27 @@ Selected section not found, please set api key and personal key manually')
                 search_in = item.keys()
         
             for key in search_in:
-                if (not not_in_keys) or (key not in not_in_keys):
-                    
+                
+                # Do value a string
+                value = item[key]
+                if sys.version_info[0] < 3:  # python 2
+                    if not (type(value) == str or type(value) == unicode):
+                        value = str(value)
+                else:  # python 3
+                    if not type(value) == str:
+                        value = str(value)
+                
+                if (not not_in_keys) or (key not in not_in_keys):   
                     if q and nq:  # if both queries were set
                         ok_res = []
                         bad_res = []
                         for qi in q:  # if item match with query from q
-                            if re.findall(qi, str(item[key]), re.IGNORECASE):
+                            if re.findall(qi, value, re.IGNORECASE):
                                 ok_res.append(item)  # add to ok_res
                                 break
                         
                         for nqi in nq:  # if match with query from nq
-                            if re.findall(nqi, str(item[key]), re.IGNORECASE):
+                            if re.findall(nqi, value, re.IGNORECASE):
                                 bad_res.append(item)  # add to bad_res
                                 break
                         
@@ -211,15 +220,14 @@ Selected section not found, please set api key and personal key manually')
                     elif q:  # only q was set
                         # Check with every query from q list
                         for qi in q:
-                            if re.findall(qi, str(item[key]), re.IGNORECASE):
+                            if re.findall(qi, value, re.IGNORECASE):
                                 res.append(item)
                                 break
                     
                     elif nq:  # only nq was set
                         # Check with every query from nq list
                         for nqi in nq:
-                            if not re.findall(nqi, str(item[key]), 
-                                              re.IGNORECASE):
+                            if not re.findall(nqi, value, re.IGNORECASE):
                                 res.append(item)
                                 break
         
