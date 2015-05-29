@@ -84,12 +84,10 @@ Selected section not found, please set api key and personal key manually')
 
         return res
     
-    def __parse_lst_by_query(self, data, q=None, nq=None):
+    def __prepare_queries(self, q=None, nq=None, in_keys=None, 
+                          not_in_keys=None, with_keys=False):
         ''' 
-        Parse list and saves only elements which (not) match with query
-        # q - query (or list with them) when item saves if match with query
-        # nq - query (ot list with) when item saves if NOT match with query
-        Return list
+        Prepare queries for parse funcs, convert to lists, decode, etc...
         '''
         
         if q and type(q) != list:
@@ -102,7 +100,32 @@ Selected section not found, please set api key and personal key manually')
             q = self.__correct_decode(q) 
         if nq and sys.version_info[0] < 3:
             nq = self.__correct_decode(nq)
+            
+        if not with_keys:
+            return q, nq
+        else:
+            if in_keys and type(in_keys) != list:
+                in_keys = [in_keys]
+            if not_in_keys and type(not_in_keys) != list:
+                not_in_keys = [not_in_keys]
+            
+            if in_keys and sys.version_info[0] < 3:
+                in_keys = self.__correct_decode(in_keys) 
+            if not_in_keys and sys.version_info[0] < 3:
+                not_in_keys = self.__correct_decode(not_in_keys)
+                
+            return q, nq, in_keys, not_in_keys
+    
+    def __parse_lst_by_query(self, data, q=None, nq=None):
+        ''' 
+        Parse list and saves only elements which (not) match with query
+        # q - query (or list with them) when item saves if match with query
+        # nq - query (ot list with) when item saves if NOT match with query
+        Return list
+        '''
         
+        q, nq = self.__prepare_queries(q, nq)
+                
         res = []
         if q and nq:  # if both queries were set
             ok_res = []
@@ -136,6 +159,109 @@ Selected section not found, please set api key and personal key manually')
                     if not re.findall(nqi, item, re.IGNORECASE):
                         res.append(item)
 
+        return res
+        
+    def __parse_lstdct_by_query(self, data, q=None, nq=None, in_keys=None, 
+                                not_in_keys=None):
+        ''' 
+        Parse list where all elements are dicts and saves only dicts where
+        selected keys are (not) match with query
+        # q - query (or list with them) when item saves if match with query
+        # nq - query (ot list with) when item saves if NOT match with query
+        Return list
+        '''
+        
+        q, nq, in_keys, not_in_keys = self.__prepare_queries(q, nq, in_keys, 
+                                                             not_in_keys, True)
+        
+        res = []
+        for item in data:  # check every dict in list 
+            
+            # If keys for searching were not set then search in all keys
+            if in_keys:
+                search_in = in_keys
+            else:  
+                search_in = item.keys()
+        
+            for key in search_in:
+                if (not not_in_keys) or (key not in not_in_keys):
+                    
+                    if q and nq:  # if both queries were set
+                        ok_res = []
+                        bad_res = []
+                        for qi in q:  # if item match with query from q
+                            if re.findall(qi, str(item[key]), re.IGNORECASE):
+                                ok_res.append(item)  # add to ok_res
+                                break
+                        
+                        for nqi in nq:  # if match with query from nq
+                            if re.findall(nqi, str(item[key]), re.IGNORECASE):
+                                bad_res.append(item)  # add to bad_res
+                                break
+                        
+                        # Add items from ok_res to res 
+                        if bad_res:  # if them not in bad_res
+                            for some_item in ok_res:
+                                if some_item not in bad_res:
+                                    res.append(some_item)
+                        else:
+                            res += ok_res
+                            break
+                        
+                    elif q:  # only q was set
+                        # Check with every query from q list
+                        for qi in q:
+                            if re.findall(qi, str(item[key]), re.IGNORECASE):
+                                res.append(item)
+                                break
+                    
+                    elif nq:  # only nq was set
+                        # Check with every query from nq list
+                        for nqi in nq:
+                            if not re.findall(nqi, str(item[key]), 
+                                              re.IGNORECASE):
+                                res.append(item)
+                                break
+        
+        return res
+    
+    def __parse_lstdct_by_key_exist(self, data, have_key=None,havent_key=None):
+        '''
+        Parse list where all elements are dicts and saves only dicts which
+        have keys from have_key and don't have keys from havent_key
+        # have_key - query (or list with them) when item saves 
+            if have key from this list
+        # havent_key - query (ot list with) when item saves 
+            if don't have keys from this list
+        Return list
+        '''
+        
+        have_key, havent_key = self.__prepare_queries(have_key, havent_key)
+        
+        res = []
+        if have_key and havent_key:  # if both queries were set
+            for item in data:  # check every dict in list 
+                for key in have_key:
+                    if key in item.keys() and (key not in havent_key):
+                        res.append(item)
+                        break
+
+        elif have_key:  # if only have_key was set
+            for item in data:  
+                for key in have_key:
+                    if key in item.keys():
+                        res.append(item)
+        
+        elif havent_key:  # of only havent_key was set
+            for item in date:
+                add = True
+                for key in havent_key:
+                    if key in item.keys():
+                        add = False
+                        break
+                if add:
+                    res.append(item)
+        
         return res
     
     ### --- Options --- ###
@@ -427,7 +553,7 @@ If you use payload value or sum then you need to set payload too')
 
         return data
     
-    ### --- Item Sales --- ###
+    ### --- Items & Resources --- ###
     def get_item_sales(self, item=None, tag=None, currency=None, revenue=True, 
                        with_date=True, per_user=False, params=None):
         ''' 
@@ -482,6 +608,53 @@ If you use payload value or sum then you need to set payload too')
                             data[key][i][1] = 0
         
         return data
+    
+    def get_res_lst(self, q=None, nq=None, in_keys=None, not_in_keys=None, 
+                    have_key=None, havent_key=None, return_key='uid', 
+                    params=None):
+        ''' 
+        Request list with all in-app resources from swrve by period
+        Every list element will be a dict with item's info
+        # q - query when item saves if match with query
+        # nq - query when item saves if NOT match with query
+        # in_keys - values by what dict's keys 
+            compare with queries from q
+        # not_in_keys - values what dict's keys 
+            don't compare with queries from nq
+        # have_key - save item if it have some key
+        # havent_key - save_item if it don't have some key
+        # return_key - don't return full dicts, return only 
+            values by return_key
+        Return list
+        '''
+        
+        # Request url
+        url = 'https://dashboard.swrve.com/api/1/exporter/item/items'
+        params = params or dict(self.defaults)
+        
+        req = requests.get(url, params=params).json()  # do request
+        # Request errors
+        if type(req) == dict:
+            if 'error' in req.keys():
+                print('Error: %s' % req['error']) 
+                return
+        
+        # If not specifed query return all list
+        if not (q or nq) and not (have_key or havent_key):  
+            res = req
+        elif have_key or havent_key:
+            res = self.__parse_lstdct_by_key_exist(req, have_key, havent_key)
+        else:
+            res = self.__parse_lstdct_by_query(req, q, nq, in_keys,not_in_keys)
+        
+        if not return_key:
+            return res
+        else:
+            results = []
+            for item in res:
+                results.append(item[return_key])
+            
+            return results
     
     ### --- Segments --- ###    
     def get_segment_lst(self, q=None, nq=None, params=None):
