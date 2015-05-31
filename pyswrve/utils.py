@@ -1,10 +1,16 @@
 # -*- coding: utf-8 -*-
 
-import requests, os.path, csv, re
-from Queue import Queue
-from urlparse import urlsplit
+import requests, os.path, csv, re, sys
 from tempfile import NamedTemporaryFile
-from ConfigParser import SafeConfigParser
+    
+if sys.version_info[0] < 3:  # Python 2
+    from urlparse import urlsplit
+    from ConfigParser import SafeConfigParser
+    from Queue import Queue
+else:  # Python 3
+    from urllib.parse import urlsplit
+    from configparser import SafeConfigParser
+    from queue import Queue
 
 ### --- User DB Downloads --- ###
 class Downloader(object):

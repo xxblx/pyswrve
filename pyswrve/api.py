@@ -2,8 +2,11 @@
 
 import requests, re, sys, os.path
 from datetime import date, timedelta
-from ConfigParser import SafeConfigParser
-#from sys import getfilesystemencoding as get_fs_enc
+
+if sys.version_info[0] < 3:  # Python 2
+    from ConfigParser import SafeConfigParser
+else:  # Python 3
+    from configparser import SafeConfigParser
 
 class SwrveSession(object):
     
