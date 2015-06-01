@@ -2,6 +2,7 @@
 
 import requests, os.path, csv, re, sys
 from tempfile import NamedTemporaryFile
+from datetime import date, timedelta
     
 if sys.version_info[0] < 3:  # Python 2
     from urlparse import urlsplit
@@ -207,7 +208,7 @@ class DataSelector(object):
             
         return results
 
-### --- CSV --- ###
+### --- Functions --- ###
 def save_to_csv(data, head=None, fname=None):
     ''' Write data to csv file '''
     
@@ -261,7 +262,54 @@ def save_to_csv(data, head=None, fname=None):
     f.close()
     print('File %s saved' % fname)
 
-### --- DataBases --- ###
+def generate_pyplot_styles(count=None, with_black=False, with_white=False):
+    ''' 
+    Generate list with line styles for drawing plots with matplotlib 
+    Return list 
+    '''
+    
+    markers = ['.', ',', 'o', 'v', '^', '<', '>']
+    for i in range(1, 5):
+        markers.append(str(i))
+    markers += ['s', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_']
+
+    colors = 'bgrcmy'
+    if with_black:
+        colors += 'k'
+    if with_white:
+        colors += 'w'
+
+    styles = []
+    for marker in markers:
+        for linestyle in ['-', '--', '-.', ':']:
+            for color in colors:
+                styles.append(color+marker+linestyle)
+                
+    count = count or len(styles)
+                
+    return styles[:count]
+
+def generate_dates_list(start, stop):
+    ''' Generate list with dates as strings like '2015-01-31' '''
+    
+    dates_list = []
+    
+    # '2015-05-14' => (2015, 5, 14)
+    start = start.split('-')
+    stop = stop.split('-')
+    for i in range(3):
+        start[i] = int(start[i])
+        stop[i] = int(stop[i])
+    
+    # dt since start to stop
+    dt = date(stop[0], stop[1], stop[2]) - date(start[0], start[1], start[2])
+    
+    for i in range(dt.days+1):
+        d = str(date(start[0], start[1], start[2]) + timedelta(days=i))
+        dates_list.append(d)
+        
+    return dates_list
+
 def postgresql_custom_properties_fix(fname):
     ''' Fix custom_properties csv file for loading to PostgreSQL '''
     
