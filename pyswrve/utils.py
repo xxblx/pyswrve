@@ -3,6 +3,7 @@
 import requests, os.path, csv, re, sys
 from tempfile import NamedTemporaryFile
 from datetime import date, timedelta
+from time import sleep
     
 if sys.version_info[0] < 3:  # Python 2
     from urlparse import urlsplit
@@ -61,7 +62,7 @@ class Downloader(object):
         else:
             return [req[sec][item]]
             
-    def download_file(self, url, path, mark_task=False):
+    def download_file(self, url, path, mark_task=False, delay=None):
         ''' Download file '''
         
         # Get file name from url and join it to path
@@ -79,6 +80,8 @@ class Downloader(object):
         
         # Mark this task as done and start next queue's file download
         if mark_task:
+            if delay:
+                sleep(delay)
             self.q.task_done()
             self.download_start(path)
         
@@ -88,11 +91,11 @@ class Downloader(object):
         for item in lst:
             self.q.put(item)
             
-    def download_start(self, path):
+    def download_start(self, path, delay=None):
         ''' Start download of next queue's file '''
         
         if not self.q.empty():
-            self.download_file(self.q.get(block=True), path, True)
+            self.download_file(self.q.get(block=True), path, True, delay)
         else:
             print('All downloads are complete')
 
