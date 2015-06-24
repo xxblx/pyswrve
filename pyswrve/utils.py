@@ -212,6 +212,15 @@ class DataSelector(object):
         return results
 
 ### --- Functions --- ###
+def str2date(str_date):
+    ''' Convert string to datetime.date '''
+    
+    str_date = str_date.split('-')
+    for i in range(3):
+        str_date[i] = int(str_date[i])
+    
+    return date(str_date[0], str_date[1], str_date[2])
+
 def save_to_csv(data, head=None, fname=None):
     ''' Write data to csv file '''
     
