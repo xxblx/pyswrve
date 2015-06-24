@@ -344,11 +344,11 @@ Selected section not found, please set api key and personal key manually')
                 return
         
         if not with_date:  # without date
-            if not tax:  # results without tax 
-                data = [i[1] for i in req[0]['data']]
-            elif tax and (factor in self.kpi_taxable):  # with tax
+            if tax and (factor in self.kpi_taxable):  # with tax
                 # value * (1 - tax), then round it to 2 symbols after dot
                 data = [round(i[1] * (1 - tax), 2) for i in req[0]['data']]
+            else:  # results without tax 
+                data = [i[1] for i in req[0]['data']]
         else:  # with date
             data = req[0]['data']
             if tax and (factor in self.kpi_taxable):
