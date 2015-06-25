@@ -212,6 +212,37 @@ class DataSelector(object):
         return results
 
 ### --- Functions --- ###
+def aggregate_weeks(data, day_average=False):
+    ''' Aggregate days data by weeks '''
+    
+    week_data = []
+    
+    next_week = data[0][0].split('-')
+    for i in range(3):
+        next_week[i] = int(next_week[i])
+    next_week = date(next_week[0], next_week[1], next_week[2])
+    next_week += timedelta(days=7)
+    
+    week_value = 0
+    for day in data:
+        # D-2015-12-31 => 2015-12-31
+        if day[0][0] == 'D':
+            day_date = day[0][2:]
+        else:
+            day_date = day[0]
+        
+        if day_date != str(next_week):
+            week_value += day[1]
+        else:
+            if day_average:
+                week_data.append([str(next_week), round(week_value / 7.0, 4)])
+            else:
+                week_data.append([str(next_week), week_value])
+            week_value = day[1]
+            next_week += timedelta(days=7)
+    
+    return week_data 
+
 def str2date(str_date):
     ''' Convert string to datetime.date '''
     
