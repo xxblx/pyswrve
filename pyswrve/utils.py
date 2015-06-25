@@ -217,11 +217,11 @@ def aggregate_weeks(data, day_average=False):
     
     week_data = []
     
-    next_week = data[0][0].split('-')
+    start_week = data[0][0].split('-')
     for i in range(1, 4):
-        next_week[i] = int(next_week[i])
-    next_week = date(next_week[1], next_week[2], next_week[3])
-    next_week += timedelta(days=7)
+        start_week[i] = int(start_week[i])
+    start_week = date(start_week[1], start_week[2], start_week[3])
+    next_week = start_week + timedelta(days=7)
     
     week_value = 0
     for day in data:
@@ -235,10 +235,11 @@ def aggregate_weeks(data, day_average=False):
             week_value += day[1]
         else:
             if day_average:
-                week_data.append([str(next_week), round(week_value / 7.0, 4)])
+                week_data.append([str(start_week), round(week_value / 7.0, 4)])
             else:
-                week_data.append([str(next_week), week_value])
+                week_data.append([str(start_week), week_value])
             week_value = day[1]
+            start_week = next_week
             next_week += timedelta(days=7)
     
     return week_data 
