@@ -218,9 +218,9 @@ def aggregate_weeks(data, day_average=False):
     week_data = []
     
     next_week = data[0][0].split('-')
-    for i in range(3):
+    for i in range(1, 4):
         next_week[i] = int(next_week[i])
-    next_week = date(next_week[0], next_week[1], next_week[2])
+    next_week = date(next_week[1], next_week[2], next_week[3])
     next_week += timedelta(days=7)
     
     week_value = 0
