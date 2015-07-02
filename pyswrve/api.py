@@ -353,7 +353,8 @@ Selected section not found, please set api key and personal key manually')
             data = req[0]['data']
             if tax and (factor in self.kpi_taxable):
                 for i in range(len(data)):
-                    data[i][1] = round(data[i][1] * (1 - tax), 2)
+                    if data[i][1]:
+                        data[i][1] = round(data[i][1] * (1 - tax), 2)
         
         return data
         
@@ -390,7 +391,9 @@ Selected section not found, please set api key and personal key manually')
             for i in range(len(dau)):
                 if dau[i]:
                     if tax and (factor in self.kpi_taxable):
-                        fdata[i][1] = round((fdata[i][1] / dau[i]) *(1-tax), 4)
+                        if fdata[i][1]:
+                            fdata[i][1] = round((fdata[i][1] / dau[i])*(1-tax), 
+                                                4)
                     else:
                         fdata[i][1] = round(fdata[i][1] / dau[i], 4)
                 else:
