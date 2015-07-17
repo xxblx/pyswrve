@@ -21,13 +21,14 @@ class Downloader(object):
     __prs = SafeConfigParser()
     defaults = {}
     
-    def __init__(self, api_key=None, personal_key=None, section=None):
+    def __init__(self, api_key=None, personal_key=None, section=None, 
+                 conf_path=None):
         
         section = section or 'defaults'
         
         # If not set on constructor load api and personal keys from config
         if not (api_key and personal_key):
-            r = self.read_conf(section)
+            r = self.read_conf(section, conf_path)
             if not r:
                 print('You need to set api key & personal key!')
         else:
@@ -35,10 +36,11 @@ class Downloader(object):
             self.defaults['personal_key'] = personal_key
         self.q = Queue()
     
-    def read_conf(self, section):
+    def read_conf(self, section, conf_path):
         ''' Read $HOME/.pyswrve config file '''
         
-        conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
+        conf_path = conf_path or os.path.join(os.path.expanduser('~'), 
+                                              '.pyswrve')
         if not os.path.exists(conf_path):
             return False
         self.__prs.read(conf_path)

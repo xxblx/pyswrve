@@ -36,13 +36,15 @@ class SwrveSession(object):
     __prs = SafeConfigParser()
     
     def __init__(self, api_key=None, personal_key=None, history=None, 
-                 start=None, stop=None, segment=None, section=None):
+                 start=None, stop=None, segment=None, section=None, 
+                 conf_path=None):
         
         self.section = section or 'defaults'
         
         # If not set on constructor load api and personal keys from config
         if not (api_key and personal_key):
-            conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
+            conf_path = conf_path or os.path.join(os.path.expanduser('~'), 
+                                                  '.pyswrve')
             self.__prs.read(conf_path)
             
             # Check does selected config section exist
