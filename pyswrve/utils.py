@@ -4,6 +4,7 @@ import requests, os.path, csv, re, sys
 from tempfile import NamedTemporaryFile
 from datetime import date, timedelta
 from time import sleep
+from socket import error as socket_error
     
 if sys.version_info[0] < 3:  # Python 2
     from urlparse import urlsplit
@@ -22,7 +23,7 @@ class Downloader(object):
     defaults = {}
     
     def __init__(self, api_key=None, personal_key=None, section=None, 
-                 conf_path=None):
+                 conf_path=None, max_attempts=10):
         
         section = section or 'defaults'
         
@@ -35,6 +36,8 @@ class Downloader(object):
             self.defaults['api_key'] = api_key
             self.defaults['personal_key'] = personal_key
         self.q = Queue()
+        
+        self.max_attempts = max_attempts
     
     def read_conf(self, section, conf_path):
         ''' Read $HOME/.pyswrve config file '''
@@ -71,14 +74,23 @@ class Downloader(object):
         fpath = os.path.join(path, os.path.split(urlsplit(url)[2])[1])
         
         # Request file and save it
-        req = requests.get(url, params=self.defaults, stream=True)
-        with open(fpath, 'w') as f:
-            for i in req.iter_content(chunk_size=1024):
-                if i:
-                    f.write(i)
-                    f.flush()
-        
-        print('%s download complete' % fpath)
+        attempts_counter = 1
+        while attempts_counter <= self.max_attempts:
+            # If connection reset by pear (for exeample) 
+            # restart file downloading
+            try:
+                req = requests.get(url, params=self.defaults, stream=True)
+                with open(fpath, 'w') as f:
+                    for i in req.iter_content(chunk_size=1024):
+                        if i:
+                            f.write(i)
+                            f.flush()
+                print('%s download complete' % fpath)
+                break
+            except socket_error:
+                msg = '%s downloading error. Restarting. Attempt: %s / %s'
+                print(msg % (fpath, attempts_counter, self.max_attempts))
+                attempts_counter += 1
         
         # Mark this task as done and start next queue's file download
         if mark_task:
