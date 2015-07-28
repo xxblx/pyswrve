@@ -417,3 +417,18 @@ def postgresql_csv_fix(fname):
     
     with open(fname, 'w') as f:
         f.write(data)
+
+def csv_rm_broken_rows(fname, row_len, delimiter=','):
+    ''' Delete rows with mismatched length '''
+    
+    with open(fname) as f:
+        data = f.readlines()
+    
+    results = ''
+    for row in data:
+        if len(re.findall(delimiter, row)) < row_len-1:
+            continue
+        results += row
+    
+    with open(fname, 'w') as f:
+        f.write(results)
