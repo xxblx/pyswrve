@@ -2,7 +2,7 @@
 
 import requests, os.path, csv, re, sys
 from tempfile import NamedTemporaryFile
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from time import sleep
 from socket import error as socket_error
     
@@ -261,14 +261,19 @@ def aggregate_weeks(data, day_average=False):
     
     return week_data 
 
-def str2date(str_date):
-    ''' Convert string to datetime.date '''
+def str2date(str_date, to_datetime=False):
+    ''' Convert string to datetime.date or datetime.datetime '''
     
     str_date = str_date.split('-')
     for i in range(3):
         str_date[i] = int(str_date[i])
     
-    return date(str_date[0], str_date[1], str_date[2])
+    if to_datetime:
+        dobj = datetime
+    else:
+        dobj = date
+    
+    return dobj(str_date[0], str_date[1], str_date[2])
 
 def list2dict(lst, head=None):
     ''' 
