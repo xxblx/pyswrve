@@ -641,7 +641,7 @@ If you use payload value or sum then you need to set payload too')
     
     def get_res_lst(self, q=None, nq=None, in_keys=None, not_in_keys=None, 
                     have_key=None, havent_key=None, return_key='uid', 
-                    params=None):
+                    params=None, active_only=None):
         ''' 
         Request list with all in-app resources from swrve by period
         Every list element will be a dict with item's info
@@ -671,20 +671,42 @@ If you use payload value or sum then you need to set payload too')
         
         # If not specifed query return all list
         if not (q or nq) and not (have_key or havent_key):  
-            res = req
+            data = req
         elif have_key or havent_key:
-            res = self.__parse_lstdct_by_key_exist(req, have_key, havent_key)
+            data = self.__parse_lstdct_by_key_exist(req, have_key, havent_key)
         else:
-            res = self.__parse_lstdct_by_query(req, q, nq, in_keys,not_in_keys)
+            data = self.__parse_lstdct_by_query(req, q,nq, in_keys,not_in_keys)
         
         if not return_key:
-            return res
+            res = data
         else:
+            res = []
+            for item in data:
+                res.append(item[return_key])
+        
+        # If set active only check every resource activity 
+        if active_only and return_key == 'uid':  
             results = []
+            current_seg = self.defaults['segment']
+            if 'currency' in self.defaults.keys():
+                current_cur = self.defaults['currency']
+            else:
+                current_cur = None
+                
+            self.set_param('segment', None)
+            self.set_param('currency', None)
             for item in res:
-                results.append(item[return_key])
+                val = self.get_item_sales(item, revenue=False, with_date=False)
+                val = sum([sum(i) for i in val.values()])
+                if val:
+                    results.append(item)
+            self.set_param('segment', current_seg)
+            if current_cur:
+                self.defaults['currency'] = current_cur
             
             return results
+        else:
+            return res
     
     ### --- Segments --- ###    
     def get_segment_lst(self, q=None, nq=None, params=None, active_only=None):
