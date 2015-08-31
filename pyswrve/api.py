@@ -436,7 +436,7 @@ Selected section not found, please set api key and personal key manually')
         return results
     
     ### --- Events --- ###
-    def get_evt_lst(self, q=None, nq=None, params=None):
+    def get_evt_lst(self, q=None, nq=None, params=None, active_only=None):
         ''' 
         Request list with all events from swrve
         # q - query when item saves if match with query
@@ -456,9 +456,23 @@ Selected section not found, please set api key and personal key manually')
                 return
                 
         if not (q or nq):  # if not specifed query return all list
-            return req
+            res = req
         else:
-            return self.__parse_lst_by_query(req, q, nq)
+            res = self.__parse_lst_by_query(req, q, nq)
+            
+        if active_only:  # if set active only check every event
+            results = []
+            current_seg = self.defaults['segment']
+            self.set_param('segment', None)
+            for evt in res:
+                val = sum(self.get_evt_stat(evt, with_date=False)[evt])
+                if val:
+                    results.append(evt)
+            self.set_param('segment', current_seg)
+                    
+            return results
+        else:
+            return res
     
     def get_payload_lst(self, ename=None, q=None, nq=None, params=None):
         ''' 
@@ -673,7 +687,7 @@ If you use payload value or sum then you need to set payload too')
             return results
     
     ### --- Segments --- ###    
-    def get_segment_lst(self, q=None, nq=None, params=None):
+    def get_segment_lst(self, q=None, nq=None, params=None, active_only=None):
         ''' 
         Request list with all segments from swrve 
         # q - query when item saves if match with query
@@ -693,6 +707,20 @@ If you use payload value or sum then you need to set payload too')
                 return
 
         if not (q or nq):  # if not specifed query return all list
-            return req
+            res = req
         else:
-            return self.__parse_lst_by_query(req, q, nq)
+            res = self.__parse_lst_by_query(req, q, nq)
+          
+        if active_only:   # if set active only check every 
+            results = []  # segment activity 
+            current_seg = self.defaults['segment']
+            for seg in res:
+                self.set_param('segment', seg)
+                
+                val = sum(self.get_kpi('dau', with_date=False))
+                if val:
+                    results.append(seg)
+            self.set_param('segment', current_seg)
+            return results
+        else:
+            return res
