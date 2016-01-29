@@ -3,7 +3,7 @@ pyswrve
 =======
 
 **pyswrve** is an unofficial Python wrapper for `Swrve <https://www.swrve.com/>`_ 
-`Export API <http://docs.swrve.com/developer-documentation/api-guides/non-client-apis/38838468/>`_
+`Export API <http://docs.swrve.com/developer-documentation/api-guides/non-client-apis/swrve-export-api-guide/>`_
 
 Quickstart
 ==========
@@ -51,10 +51,6 @@ After this you don't need to set api key and personal key on object creation.
 
 `Check wiki for details <https://github.com/xxblx/pyswrve/wiki>`_. 
 
-
-Additional info
-===============
-
-If you have any questions feel free to contact with me: olkozlov@playrix.com. 
+ 
 
 Oleg Kozlov (xxblx), 2015
