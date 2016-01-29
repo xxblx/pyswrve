@@ -163,28 +163,6 @@ def str2date(str_date, to_datetime=False):
     
     return dobj(str_date[0], str_date[1], str_date[2])
 
-def list2dict(lst, head=None):
-    ''' 
-    Transform list with lists (as rows) to dict where 
-    keys are cols headers and values are cols 
-    '''
-
-    if not head:
-        head = lst[0]
-        lst = lst[1:]
-        
-    index_dct = {}
-    results_dct = {}
-    for i in range(len(head)):
-        index_dct[i] = head[i]
-        results_dct[head[i]] = []
-    
-    for line in lst:
-        for i in range(len(line)):
-            results_dct[index_dct[i]].append(line[i])
-    
-    return results_dct
-
 def save_to_csv(data, head=None, fname=None):
     ''' Write data to csv file '''
     
