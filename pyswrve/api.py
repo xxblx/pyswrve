@@ -29,9 +29,6 @@ class SwrveSession(object):
     
     kpi_factors = tuple(kpi_factors)  # convert list to tuple
     
-    # Standart taxes
-    taxes = {'AppStore': 0.3}
-    
     # INI config file parser
     __prs = SafeConfigParser()
     

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-import requests, os.path, csv, re, sys
+import requests, os.path, csv, sys
 from tempfile import NamedTemporaryFile
 from datetime import date, datetime, timedelta
 from time import sleep
