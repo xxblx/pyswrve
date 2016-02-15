@@ -62,6 +62,9 @@ class Downloader(object):
         req = requests.get('https://dashboard.swrve.com/api/1/userdbs.json', 
                            params=self.defaults).json()
         
+        if item == 'all':
+            return req[sec]
+        
         if type(req[sec][item]) == list:
             return req[sec][item]
         else:
