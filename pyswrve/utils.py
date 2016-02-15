@@ -80,7 +80,7 @@ class Downloader(object):
             # restart file downloading
             try:
                 req = requests.get(url, params=self.defaults, stream=True)
-                with open(fpath, 'w') as f:
+                with open(fpath, 'wb') as f:
                     for i in req.iter_content(chunk_size=1024):
                         if i:
                             f.write(i)
