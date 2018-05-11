@@ -14,7 +14,7 @@ s = pyswrve.API(api_key='some_key', personal_key='some_key2')
 s.set_dates(period='week', period_count=2)  # last 2 weeks
 ```
 
-You can save api_key and personal_key to config file ($HOME/.pyswrve) with save_defaults method
+You can save api_key and personal_key to config file (default: `$HOME/.pyswrve`) with `save_config` method
 
 ```
 import pyswrve
