@@ -2,20 +2,22 @@
 
 from distutils.core import setup
 
+from pyswrve import __version__
+
 setup(
     name = 'pyswrve',
-    version = '0.1',
+    version = __version__,
     license='MIT License',
-    
+
     author = 'Oleg Kozlov (xxblx)',
-    author_email = 'olkozlov@playrix.com',
-    
+    author_email = 'xxblx@posteo.org',
+
     description = 'Unofficial Python wrapper for Swrve Export API',
-    
+
     requires = ['requests'],
 
     packages = ['pyswrve'],
-    
+
     classifiers=[
         'Intended Audience :: Developers',
         'Programming Language :: Python :: 2.7',
