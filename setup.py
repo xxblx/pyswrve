@@ -9,7 +9,7 @@ setup(
     version=__version__,
     license='MIT License',
 
-    author='Oleg Kozlov (xxblx)',
+    author='Oleg Kozlov',
     author_email='xxblx@posteo.org',
 
     description='Unofficial Python wrapper for Swrve Export API',

@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import re
 import os.path
 from datetime import date, timedelta
 from configparser import SafeConfigParser
@@ -71,74 +70,8 @@ Selected section not found, please set api key and personal key manually')
             'segment': segment
         }
 
-    def __prepare_queries(self, q=None, nq=None, in_keys=None,
-                          not_in_keys=None, with_keys=False):
-        '''
-        Prepare queries for parse funcs, convert to lists, decode, etc...
-        '''
-
-        if q and type(q) != list:
-            q = [q]
-        if nq and type(nq) != list:
-            nq = [nq]
-
-        if not with_keys:
-            return q, nq
-        else:
-            if in_keys and type(in_keys) != list:
-                in_keys = [in_keys]
-            if not_in_keys and type(not_in_keys) != list:
-                not_in_keys = [not_in_keys]
-
-            return q, nq, in_keys, not_in_keys
-
-    def __parse_lst_by_query(self, data, q=None, nq=None):
-        '''
-        Parse list and saves only elements which (not) match with query
-        # q - query (or list with them) when item saves if match with query
-        # nq - query (ot list with) when item saves if NOT match with query
-        Return list
-        '''
-
-        q, nq = self.__prepare_queries(q, nq)
-
-        res = []
-        if q and nq:  # if both queries were set
-            ok_res = []
-            bad_res = []
-            for item in data:
-                for qi in q:  # if item match with query from q
-                    if re.findall(qi, item, re.IGNORECASE):
-                        ok_res.append(item)  # add to ok_res
-
-                for nqi in nq:  # if match with query from nq
-                    if re.findall(nqi, item, re.IGNORECASE):
-                        bad_res.append(item)  # add to bad_res
-
-            # Add items from ok_res to res if them not in bad_res
-            if bad_res:
-                for item in ok_res:
-                    if item not in bad_res:
-                        res.append(item)
-            else:
-                res = ok_res
-
-        elif q:  # only q was set
-            for item in data:
-                for qi in q:  # check with every query from q list
-                    if re.findall(qi, item, re.IGNORECASE):
-                        res.append(item)
-
-        elif nq:  # only nq was set
-            for item in data:
-                for nqi in nq:  # check with every query from nq list
-                    if not re.findall(nqi, item, re.IGNORECASE):
-                        res.append(item)
-
-        return res
-
     def save_defaults(self):
-        """" Save default params from config file """
+        """" Save default params to config file """
 
         conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
         with open(conf_path, 'w') as f:
@@ -149,6 +82,7 @@ Selected section not found, please set api key and personal key manually')
         set one new
         """
 
+        # FIXME: bug, need to replace param with val
         if param == 'api_key':
             self.__prs.set(self.section, 'api_key', param)
         elif param == 'personal_key':
@@ -187,7 +121,10 @@ Selected section not found, please set api key and personal key manually')
 
     def get_kpi(self, factor, with_date=True, currency=None, params=None,
                 tax=None):
-        """ Request KPI factor data from swrve. Return list. """
+        """ Request KPI factor data from swrve
+
+        :rtype: :class:`list`
+        """
 
         # Request url
         url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % factor
@@ -198,7 +135,7 @@ Selected section not found, please set api key and personal key manually')
         req = requests.get(url, params=params).json()
 
         # Request errors
-        if type(req) == dict:
+        if isinstance(req, dict):
             if 'error' in req.keys():
                 print('Error: %s' % req['error'])
                 return
@@ -220,7 +157,10 @@ Selected section not found, please set api key and personal key manually')
 
     def get_kpi_dau(self, factor, with_date=True, currency=None, params=None,
                     tax=None):
-        """" Request data for KPI factor / DAU (per one user). Return list. """
+        """" Request data for KPI factor / DAU (per one user)
+
+        :rtype: :class:`list`
+        """
 
         # Request url
         url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % factor
@@ -264,7 +204,10 @@ Selected section not found, please set api key and personal key manually')
 
     def get_few_kpi(self, factor_lst, with_date=True, per_user=False,
                     currency=None, params=None, tax=None):
-        """ Request data for few different KPI factors. Return list. """
+        """ Request data for few different KPI factors
+
+        :rtype: :class:`list`
+        """
 
         params = params or dict(self.defaults)  # request params
         if currency:
@@ -278,7 +221,7 @@ Selected section not found, please set api key and personal key manually')
         count_index = 0
         results = []
         for factor in factor_lst:
-            if not count_index:  # == 0
+            if count_index == 0:
 
                 if with_date:
                     results = get_func(factor, tax=tax)
@@ -293,12 +236,11 @@ Selected section not found, please set api key and personal key manually')
 
         return results
 
-    def get_evt_lst(self, q=None, nq=None, params=None, active_only=None):
+    def get_evt_lst(self, params=None):
         """
         Request list with all events from swrve
-        # q - query when item saves if match with query
-        # nq - query when item saves if NOT match with query
-        Return list
+
+        :rtype: :class:`list`
         """
 
         # Request url
@@ -307,36 +249,18 @@ Selected section not found, please set api key and personal key manually')
 
         req = requests.get(url, params=params).json()  # do request
         # Request errors
-        if type(req) == dict:
+        if isinstance(req, dict):
             if 'error' in req.keys():
                 print('Error: %s' % req['error'])
                 return
 
-        if not (q or nq):  # if not specifed query return all list
-            res = req
-        else:
-            res = self.__parse_lst_by_query(req, q, nq)
+        return req
 
-        if active_only:  # if set active only check every event
-            results = []
-            current_seg = self.defaults['segment']
-            self.set_param('segment', None)
-            for evt in res:
-                val = sum(self.get_evt_stat(evt, with_date=False)[evt])
-                if val:
-                    results.append(evt)
-            self.set_param('segment', current_seg)
-
-            return results
-        else:
-            return res
-
-    def get_payload_lst(self, ename=None, q=None, nq=None, params=None):
+    def get_payload_lst(self, ename=None, params=None):
         """
         Request payloads list for event
-        # q - query when item saves if match with query
-        # nq - query when item saves if NOT match with query
-        Return list
+
+        :rtype: :class:`list`
         """
 
         # Request url
@@ -347,22 +271,20 @@ Selected section not found, please set api key and personal key manually')
 
         req = requests.get(url, params=params).json()  # do request
         # Request errors
-        if type(req) == dict:
+        if isinstance(req, dict):
             if 'error' in req.keys():
                 print('Error: %s' % req['error'])
                 return
 
-        if not (q or nq):  # if not specifed query return all list
-            return req
-        else:
-            return self.__parse_lst_by_query(req, q, nq)
+        return req
 
     def get_evt_stat(self, ename=None, payload=None, payload_val=None,
                      payload_sum=None, with_date=True, per_user=False,
                      params=None):
-        """
-        Request events triggering count with(out) payload key. Return dict.
+        """ Request events triggering count with(out) payload key.
         If with payload, keys are payload's values, else key is an event name.
+
+        :rtype: :class:`dict`
         """
 
         if (payload_val or payload_sum) and not payload:
@@ -383,7 +305,7 @@ If you use payload value or sum then you need to set payload too')
 
         req = requests.get(url, params=params).json()  # do request
         # Request errors
-        if type(req) == dict:
+        if isinstance(req, dict):
             if 'error' in req.keys():
                 print('Error: %s' % req['error'])
                 return
@@ -446,7 +368,8 @@ If you use payload value or sum then you need to set payload too')
                        with_date=True, per_user=False, params=None):
         """
         Request count of item sales or revenue from items sales
-        Return dict where key is 'item name - currency'
+
+        :rtype: :class:`dict`
         """
 
         params = params or dict(self.defaults)  # request params
@@ -464,7 +387,7 @@ If you use payload value or sum then you need to set payload too')
 
         req = requests.get(url, params=params).json()  # do request
         # Request errors
-        if type(req) == dict:
+        if isinstance(req, dict):
             if 'error' in req.keys():
                 print('Error: %s' % req['error'])
                 return
@@ -499,12 +422,10 @@ If you use payload value or sum then you need to set payload too')
 
         return data
 
-    def get_segment_lst(self, q=None, nq=None, params=None, active_only=None):
-        """
-        Request list with all segments from swrve
-        # q - query when item saves if match with query
-        # nq - query when item saves if NOT match with query
-        Return list
+    def get_segment_lst(self, params=None):
+        """ Get List of all segments
+
+        :rtype: :class:`list`
         """
 
         # Request url
@@ -513,26 +434,9 @@ If you use payload value or sum then you need to set payload too')
 
         req = requests.get(url, params=params).json()  # do request
         # Request errors
-        if type(req) == dict:
+        if isinstance(req, dict):
             if 'error' in req.keys():
                 print('Error: %s' % req['error'])
                 return
 
-        if not (q or nq):  # if not specifed query return all list
-            res = req
-        else:
-            res = self.__parse_lst_by_query(req, q, nq)
-
-        if active_only:   # if set active only check every
-            results = []  # segment activity
-            current_seg = self.defaults['segment']
-            for seg in res:
-                self.set_param('segment', seg)
-
-                val = sum(self.get_kpi('dau', with_date=False))
-                if val:
-                    results.append(seg)
-            self.set_param('segment', current_seg)
-            return results
-        else:
-            return res
+        return req
