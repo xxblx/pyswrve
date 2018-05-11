@@ -72,10 +72,6 @@ class SwrveSession:
             self.__conf.write(f)
 
     def set_param(self, key, val):
-        """ Set new value for key in params or create new key-value pair
-        if it doesn't exist
-        """
-
         self._params[key] = val
 
     def set_dates(self, start=None, stop=None, period=None, period_len=None):
