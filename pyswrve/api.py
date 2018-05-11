@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-import requests, re, sys, os.path
+import re
+import os.path
 from datetime import date, timedelta
+from configparser import SafeConfigParser
 
-if sys.version_info[0] < 3:  # Python 2
-    from ConfigParser import SafeConfigParser
-else:  # Python 3
-    from configparser import SafeConfigParser
+import requests
 
-class SwrveSession(object):
+
+class SwrveSession:
 
     # Default swrve's KPI factors
     kpi_factors = ['dau', 'mau', 'dau_mau', 'new_users', 'dpu', 'conversion',
@@ -71,21 +71,6 @@ Selected section not found, please set api key and personal key manually')
             'segment': segment
         }
 
-    def __correct_decode(self, lst):
-        '''
-        Do correct decode of all list items to unicode in python 2
-        '''
-
-        res = []
-        e = sys.getfilesystemencoding()  # encoding like 'UTF-8'
-        for item in lst:
-            if type(item) != unicode:
-                res.append(item.decode(e))
-            else:
-                res.append(item)
-
-        return res
-
     def __prepare_queries(self, q=None, nq=None, in_keys=None,
                           not_in_keys=None, with_keys=False):
         '''
@@ -97,12 +82,6 @@ Selected section not found, please set api key and personal key manually')
         if nq and type(nq) != list:
             nq = [nq]
 
-        # u'КИРИЛЛИЦА' != 'КИРИЛЛИЦА' in Python 2, need str => unicode
-        if q and sys.version_info[0] < 3:
-            q = self.__correct_decode(q)
-        if nq and sys.version_info[0] < 3:
-            nq = self.__correct_decode(nq)
-
         if not with_keys:
             return q, nq
         else:
@@ -110,11 +89,6 @@ Selected section not found, please set api key and personal key manually')
                 in_keys = [in_keys]
             if not_in_keys and type(not_in_keys) != list:
                 not_in_keys = [not_in_keys]
-
-            if in_keys and sys.version_info[0] < 3:
-                in_keys = self.__correct_decode(in_keys)
-            if not_in_keys and sys.version_info[0] < 3:
-                not_in_keys = self.__correct_decode(not_in_keys)
 
             return q, nq, in_keys, not_in_keys
 
@@ -163,18 +137,17 @@ Selected section not found, please set api key and personal key manually')
 
         return res
 
-    ### --- Options --- ###
     def save_defaults(self):
-        ''' Save default params from config file '''
+        """" Save default params from config file """
 
         conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
         with open(conf_path, 'w') as f:
             self.__prs.write(f)
 
     def set_param(self, param, val):
-        '''
-        Change value of param defined on object creation or set one new
-        '''
+        """ Change value of param defined on object creation or \
+        set one new
+        """
 
         if param == 'api_key':
             self.__prs.set(self.section, 'api_key', param)
@@ -184,7 +157,7 @@ Selected section not found, please set api key and personal key manually')
         self.defaults[param] = val
 
     def set_dates(self, start=None, stop=None, period=None, period_count=None):
-        ''' Set start and stop or history params '''
+        """ Set start and stop or history params """
 
         if not (start and stop or period):
             print('You need to set start & stop dates or set period')
@@ -212,14 +185,13 @@ Selected section not found, please set api key and personal key manually')
         self.defaults['start'] = str(start)
         self.defaults['stop'] = str(stop)
 
-    ### --- KPI --- ###
     def get_kpi(self, factor, with_date=True, currency=None, params=None,
                 tax=None):
-        ''' Request KPI factor data from swrve. Return list. '''
+        """ Request KPI factor data from swrve. Return list. """
 
         # Request url
         url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % factor
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
         if currency:
             params['currency'] = currency  # cash, coins, etc...
 
@@ -248,11 +220,11 @@ Selected section not found, please set api key and personal key manually')
 
     def get_kpi_dau(self, factor, with_date=True, currency=None, params=None,
                     tax=None):
-        ''' Request data for KPI factor / DAU (per one user). Return list. '''
+        """" Request data for KPI factor / DAU (per one user). Return list. """
 
         # Request url
         url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % factor
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
         if currency:
             params['currency'] = currency  # cash, coins, etc...
 
@@ -292,9 +264,9 @@ Selected section not found, please set api key and personal key manually')
 
     def get_few_kpi(self, factor_lst, with_date=True, per_user=False,
                     currency=None, params=None, tax=None):
-        ''' Request data for few different KPI factors. Return list. '''
+        """ Request data for few different KPI factors. Return list. """
 
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
         if currency:
             params['currency'] = currency  # cash, coins, etc...
 
@@ -321,18 +293,17 @@ Selected section not found, please set api key and personal key manually')
 
         return results
 
-    ### --- Events --- ###
     def get_evt_lst(self, q=None, nq=None, params=None, active_only=None):
-        '''
+        """
         Request list with all events from swrve
         # q - query when item saves if match with query
         # nq - query when item saves if NOT match with query
         Return list
-        '''
+        """
 
         # Request url
         url = 'https://dashboard.swrve.com/api/1/exporter/event/list'
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
 
         req = requests.get(url, params=params).json()  # do request
         # Request errors
@@ -361,16 +332,16 @@ Selected section not found, please set api key and personal key manually')
             return res
 
     def get_payload_lst(self, ename=None, q=None, nq=None, params=None):
-        '''
+        """
         Request payloads list for event
         # q - query when item saves if match with query
         # nq - query when item saves if NOT match with query
         Return list
-        '''
+        """
 
         # Request url
         url = 'https://dashboard.swrve.com/api/1/exporter/event/payloads'
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
         if ename:
             params['name'] = ename
 
@@ -389,17 +360,17 @@ Selected section not found, please set api key and personal key manually')
     def get_evt_stat(self, ename=None, payload=None, payload_val=None,
                      payload_sum=None, with_date=True, per_user=False,
                      params=None):
-        '''
+        """
         Request events triggering count with(out) payload key. Return dict.
         If with payload, keys are payload's values, else key is an event name.
-        '''
+        """
 
         if (payload_val or payload_sum) and not payload:
             print('\
 If you use payload value or sum then you need to set payload too')
             return
 
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
         if ename:
             params['name'] = ename
         if payload:
@@ -450,7 +421,9 @@ If you use payload value or sum then you need to set payload too')
                             data[key][i] = 0
                     else:
                         if dau[i]:
-                            data[key][i][1] = round(data[key][i][1] / dau[i],4)
+                            data[key][i][1] = round(
+                                data[key][i][1] / dau[i], 4
+                            )
                         else:
                             data[key][i][1] = 0
 
@@ -469,15 +442,14 @@ If you use payload value or sum then you need to set payload too')
 
         return data
 
-    ### --- Items & Resources --- ###
     def get_item_sales(self, item=None, tag=None, currency=None, revenue=True,
                        with_date=True, per_user=False, params=None):
-        '''
+        """
         Request count of item sales or revenue from items sales
         Return dict where key is 'item name - currency'
-        '''
+        """
 
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
         if item:
             params['uid'] = item
         if tag:
@@ -519,24 +491,25 @@ If you use payload value or sum then you need to set payload too')
                             data[key][i] = 0
                     else:
                         if dau[i]:
-                            data[key][i][1] = round(data[key][i][1] / dau[i],4)
+                            data[key][i][1] = round(
+                                data[key][i][1] / dau[i], 4
+                            )
                         else:
                             data[key][i][1] = 0
 
         return data
 
-    ### --- Segments --- ###
     def get_segment_lst(self, q=None, nq=None, params=None, active_only=None):
-        '''
+        """
         Request list with all segments from swrve
         # q - query when item saves if match with query
         # nq - query when item saves if NOT match with query
         Return list
-        '''
+        """
 
         # Request url
         url = 'https://dashboard.swrve.com/api/1/exporter/segment/list'
-        params = params or dict(self.defaults) # request params
+        params = params or dict(self.defaults)  # request params
 
         req = requests.get(url, params=params).json()  # do request
         # Request errors

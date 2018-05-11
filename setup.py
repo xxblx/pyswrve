@@ -5,18 +5,18 @@ from distutils.core import setup
 from pyswrve import __version__
 
 setup(
-    name = 'pyswrve',
-    version = __version__,
+    name='pyswrve',
+    version=__version__,
     license='MIT License',
 
-    author = 'Oleg Kozlov (xxblx)',
-    author_email = 'xxblx@posteo.org',
+    author='Oleg Kozlov (xxblx)',
+    author_email='xxblx@posteo.org',
 
-    description = 'Unofficial Python wrapper for Swrve Export API',
+    description='Unofficial Python wrapper for Swrve Export API',
 
-    requires = ['requests'],
+    requires=['requests'],
 
-    packages = ['pyswrve'],
+    packages=['pyswrve'],
 
     classifiers=[
         'Intended Audience :: Developers',
@@ -26,5 +26,5 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'License :: OSI Approved :: MIT License',
     ],
-    keywords='swrve swrve.com export api wrapper'
+    keywords='swrve api wrapper'
 )
