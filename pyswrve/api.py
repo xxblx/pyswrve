@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os.path
-from datetime import date, timedelta
+from datetime import datetime, timedelta
 from configparser import SafeConfigParser
 
 import requests
@@ -9,115 +9,99 @@ import requests
 
 class SwrveSession:
 
-    # Default swrve's KPI factors
-    kpi_factors = ['dau', 'mau', 'dau_mau', 'new_users', 'dpu', 'conversion',
+    # Default swrve KPI factors
+    kpi_factors = {'dau', 'mau', 'dau_mau', 'new_users', 'dpu', 'conversion',
                    'dollar_revenue', 'currency_spent', 'currency_spent_dau',
                    'currency_purchased', 'currency_purchased_dau',
                    'currency_given', 'items_purchased', 'items_purchased_dau',
                    'session_count', 'avg_session_length', 'arpu_daily',
                    'arppu_daily', 'arpu_monthly', 'arppu_monthly',
-                   'avg_playtime', 'day30_retention']
-
-    # Factors which are need tax calculation
-    kpi_taxable = ('dollar_revenue', 'arpu_daily', 'arppu_daily',
-                   'arpu_monthly', 'arppu_monthly')
+                   'avg_playtime', 'day30_retention'}
 
     for i in (1, 3, 7):
-        kpi_factors.append('day%s_reengagement' % i)
-        kpi_factors.append('day%s_retention' % i)
+        kpi_factors.add('day%s_reengagement' % i)
+        kpi_factors.add('day%s_retention' % i)
 
-    kpi_factors = tuple(kpi_factors)  # convert list to tuple
+    kpi_taxable = {'dollar_revenue', 'arpu_daily', 'arppu_daily',
+                   'arpu_monthly', 'arppu_monthly'}
+    period_lens = {'day': 1, 'week': 7, 'month': 30, 'year': 360}
 
-    # INI config file parser
-    __prs = SafeConfigParser()
+    conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
+    __conf = SafeConfigParser()
 
-    def __init__(self, api_key=None, personal_key=None, history=None,
-                 start=None, stop=None, segment=None, section=None,
+    def __init__(self, api_key=None, personal_key=None, section=None,
                  conf_path=None):
+        """ __init__
 
-        self.section = section or 'defaults'
-
-        # If not set on constructor load api and personal keys from config
-        if not (api_key and personal_key):
-            conf_path = conf_path or os.path.join(os.path.expanduser('~'),
-                                                  '.pyswrve')
-            self.__prs.read(conf_path)
-
-            # Check does selected config section exist
-            if not (self.__prs.has_section(self.section) and
-                    self.__prs.has_section('defaults')):
-                print('\
-Selected section not found, please set api key and personal key manually')
-                return
-            elif not self.__prs.has_section(self.section):
-                print('Selected section not found, using defaults')
-                self.section = 'defaults'
-
-            api_key = self.__prs.get(self.section, 'api_key')
-            personal_key = self.__prs.get(self.section, 'personal_key')
-        else:
-            self.__prs.add_section(self.section)
-            self.__prs.set(self.section, 'api_key', api_key)
-            self.__prs.set(self.section, 'personal_key', personal_key)
-
-        # Required by any request
-        self.defaults = {
-            'api_key': api_key,
-            'personal_key': personal_key,
-            'history': history,
-            'start': start,
-            'stop': stop,
-            'segment': segment
-        }
-
-    def save_defaults(self):
-        """" Save default params to config file """
-
-        conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
-        with open(conf_path, 'w') as f:
-            self.__prs.write(f)
-
-    def set_param(self, param, val):
-        """ Change value of param defined on object creation or \
-        set one new
+        :param api_key: [:class:`str`] API Key from Swrve Dashboard - \
+            Setup -  Integration Settings - App Information
+        :param personal_key: [:class:`str`] Your personal key from \
+            Swrve Dashboard Setup -  Integration Settings
+        :param section: [:class:`str`] section in pyswrve config, you \
+            are able to store keys for different projects in different \
+            config sections
+        :param conf_path: [:class:`str`] arg overrides default path to \
+            config file with entered
         """
 
-        # FIXME: bug, need to replace param with val
-        if param == 'api_key':
-            self.__prs.set(self.section, 'api_key', param)
-        elif param == 'personal_key':
-            self.__prs.set(self.section, 'personal_key', param)
+        if section is None:
+            section = 'defaults'
+        self.section = section
 
-        self.defaults[param] = val
+        if not api_key or not personal_key:
+            if conf_path is not None:
+                self.con_path = conf_path
 
-    def set_dates(self, start=None, stop=None, period=None, period_count=None):
-        """ Set start and stop or history params """
+            self.__conf.read(self.conf_path)
+            api_key = self.__conf.get(section, 'api_key')
+            personal_key = self.__conf.get(section, 'personal_key')
 
-        if not (start and stop or period):
-            print('You need to set start & stop dates or set period')
-            return
-        elif period:
+        self._params = {
+            'api_key': api_key,
+            'personal_key': personal_key
+        }
 
-            # About period & period_count
-            # Period = week, period_count = 3 => 3 weeks
-            # Period = month, period_count = 5 => 5 months, etc...
-            if not period_count:
-                period_count = 1
-            stop = date.today() - timedelta(days=1)
+    def save_config(self):
+        """ Save params to config file """
 
-            if period == 'day':
-                count = 1
-            elif period == 'week':
-                count = 7
-            elif period == 'month':
-                count = 30
-            elif period == 'year':
-                count = 365
+        for key in self._params:
+            val = self._params[key]
+            self.__conf.set(self.section, key, val)
 
-            start = stop - timedelta(days=count*period_count)
+        with open(self.conf_path, 'w') as f:
+            self.__conf.write(f)
 
-        self.defaults['start'] = str(start)
-        self.defaults['stop'] = str(stop)
+    def set_param(self, key, val):
+        """ Set new value for key in params or create new key-value pair
+        if it doesn't exist
+        """
+
+        self._params[key] = val
+
+    def set_dates(self, start=None, stop=None, period=None, period_len=None):
+        """ Set start and stop or history params
+
+        :param start: period's first date
+        :type start: datetime, str
+        :param stop: period's last date
+        :type stop: datetime, str
+        :param period: [:class:`str`] day, week, month or year
+        :period_len: [:class:`int`] count of days (weeks, etc) in period
+        """
+
+        if period:
+            if period_len is None:
+                period_len = 1
+            stop = datetime.today()
+            days = period_len * self.period_lens(period)
+            start = stop - timedelta(days=days)
+
+        for _date in (start, stop):
+            if isinstance(_date, datetime):
+                _date = _date.strftime('%Y-%m-%d')
+
+        self.defaults['start'] = start
+        self.defaults['stop'] = stop
 
     def get_kpi(self, factor, with_date=True, currency=None, params=None,
                 tax=None):

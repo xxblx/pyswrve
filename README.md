@@ -19,7 +19,7 @@ You can save api_key and personal_key to config file ($HOME/.pyswrve) with save_
 ```
 import pyswrve
 s = pyswrve.API(api_key='some_key', personal_key='some_key2')
-s.save_defaults()
+s.save_config()
 ```
 
 ```
