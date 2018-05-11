@@ -6,6 +6,8 @@ from configparser import SafeConfigParser
 
 import requests
 
+from .exceptions import SwrveApiException
+
 
 class SwrveSession:
 
@@ -33,14 +35,14 @@ class SwrveSession:
                  conf_path=None):
         """ __init__
 
-        :param api_key: [:class:`str`] API Key from Swrve Dashboard - \
+        :param api_key: [:class:`str`] API Key from Swrve Dashboard -
             Setup -  Integration Settings - App Information
-        :param personal_key: [:class:`str`] Your personal key from \
+        :param personal_key: [:class:`str`] Your personal key from
             Swrve Dashboard Setup -  Integration Settings
-        :param section: [:class:`str`] section in pyswrve config, you \
-            are able to store keys for different projects in different \
+        :param section: [:class:`str`] section in pyswrve config, you
+            are able to store keys for different projects in different
             config sections
-        :param conf_path: [:class:`str`] arg overrides default path to \
+        :param conf_path: [:class:`str`] arg overrides default path to
             config file with entered
         """
 
@@ -99,39 +101,59 @@ class SwrveSession:
         self.defaults['start'] = start
         self.defaults['stop'] = stop
 
-    def get_kpi(self, factor, with_date=True, currency=None, params=None,
-                tax=None):
-        """ Request KPI factor data from swrve
+    def send_api_request(self, url, params):
+        """ Send GET request to Swrve Export API
 
-        :rtype: :class:`list`
+        :param url: [:class:`str`] url for request
+        :param params: [:class:`dict`] dictionary with request params
+        :returns: [:class:`dict`] request results
+        :raises SwrveApiException: if request status_code != 200
+        """
+
+        req = requests.get(url, params=params)
+        if req.status_code != 200:
+            error = None
+            try:
+                error['error'] = req.json()['error']
+            except ValueError:
+                pass
+            raise SwrveApiException(error, req.status_code, params, url)
+
+        return req.json()
+
+    def get_kpi(self, kpi, with_date=True, currency=None, multiplier=None):
+        """ Request the kpi stats
+
+        :param kpi: [:class:`str`] the kpi's name, one from
+            `SwrveSession.kpi_factors`
+        :param with_date: [`bool`] by default swrve return every element
+            as [['D-2015-01-31', 126.0], ['D-2015-01-31', 116.0]] so
+            the result is a list of lists, if `with_date` setted to `True`
+            the original result is modifing to list of values like
+            [126.0, 116.0]
+        :param currency: [:class:`str`] in-project currency, used for kpis
+            like currency_given
+        :param multiplier: [:class:`float`] revenue multiplier like in Swrve
+            Dashboard - Setup - Report Settings - Reporting Revenue,
+            it applies to revenue, arpu and arppu
+        :return: [:class:`list`] a list of lists with dates and values or
+            a list of values
         """
 
         # Request url
-        url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % factor
-        params = params or dict(self.defaults)  # request params
+        url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % kpi
+        params = self._params.copy()
         if currency:
-            params['currency'] = currency  # cash, coins, etc...
+            params['currency'] = currency
 
-        req = requests.get(url, params=params).json()
+        results = self.send_api_request(url, params)
+        data = results[0]['data']
 
-        # Request errors
-        if isinstance(req, dict):
-            if 'error' in req.keys():
-                print('Error: %s' % req['error'])
-                return
+        if multiplier is not None and kpi in self.kpi_taxable:
+            data = [[i[0], i[1]*multiplier] for i in data]
 
-        if not with_date:  # without date
-            if tax and (factor in self.kpi_taxable):  # with tax
-                # value * (1 - tax), then round it to 2 symbols after dot
-                data = [round(i[1] * (1 - tax), 2) for i in req[0]['data']]
-            else:  # results without tax
-                data = [i[1] for i in req[0]['data']]
-        else:  # with date
-            data = req[0]['data']
-            if tax and (factor in self.kpi_taxable):
-                for i in range(len(data)):
-                    if data[i][1]:
-                        data[i][1] = round(data[i][1] * (1 - tax), 2)
+        if not with_date:
+            data = [i[1] for i in data]
 
         return data
 
