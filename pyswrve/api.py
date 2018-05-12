@@ -98,8 +98,8 @@ class SwrveSession:
             if isinstance(_date, datetime):
                 _date = _date.strftime('%Y-%m-%d')
 
-        self.defaults['start'] = start
-        self.defaults['stop'] = stop
+        self.set_param('start', start)
+        self.set_param('stop', stop)
 
     def send_api_request(self, url, params):
         """ Send GET request to Swrve Export API
@@ -137,7 +137,7 @@ class SwrveSession:
             Dashboard - Setup - Report Settings - Reporting Revenue,
             it applies to revenue, arpu and arppu
         :return: [:class:`list`] a list of lists with dates and values or
-            a list of values
+            a list of values, it depends on with_date arg
         """
 
         # Request url
@@ -157,52 +157,46 @@ class SwrveSession:
 
         return data
 
-    def get_kpi_dau(self, factor, with_date=True, currency=None, params=None,
-                    tax=None):
-        """" Request data for KPI factor / DAU (per one user)
+    def get_kpi_dau(self, kpi, with_date=True, currency=None, multiplier=None):
+        """" Request the kpi stats and divide every value with DAU
 
-        :rtype: :class:`list`
+        :param kpi: [:class:`str`] the kpi's name, one from
+            `SwrveSession.kpi_factors`
+        :param with_date: [`bool`] by default swrve return every element
+            as [['D-2015-01-31', 126.0], ['D-2015-01-31', 116.0]] so
+            the result is a list of lists, if `with_date` setted to `True`
+            the original result is modifing to list of values like
+            [126.0, 116.0]
+        :param currency: [:class:`str`] in-project currency, used for kpis
+            like currency_given
+        :param multiplier: [:class:`float`] revenue multiplier like in Swrve
+            Dashboard - Setup - Report Settings - Reporting Revenue,
+            it applies to revenue, arpu and arppu
+        :return: [:class:`list`] a list of lists with dates and values or
+            a list of values, it depends on with_date arg
         """
 
-        # Request url
-        url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % factor
-        params = params or dict(self.defaults)  # request params
-        if currency:
-            params['currency'] = currency  # cash, coins, etc...
+        data = {}
+        for k in ('dau', kpi):
+            data[k] = self.get_kpi(k, with_date, currency, multiplier)
 
-        dau = self.get_kpi('dau', False, currency, params)
-        if not dau:  # dau will be None if request was failed with error
-            return   # because error already was printed just return
-        req = requests.get(url, params=params).json()
+        results = []
+        for idx in range(len(data['dau'])):
+            dau = data['dau'][idx]
+            kpi = data[kpi][idx]
 
-        fdata = req[0]['data']  # factor data
-        data = []
-        if not with_date:  # without date
-            for i in range(len(dau)):
-                # Check does dau[i] > 0 for ZeroDivisionError fix
-                if dau[i]:
-                    # Substract tax from value
-                    if tax and (factor in self.kpi_taxable):
-                        val = round((fdata[i][1] / dau[i]) * (1 - tax), 4)
-                    else:  # no substraction
-                        val = round(fdata[i][1] / dau[i], 4)
-                else:
-                    val = 0
-                data.append(val)
-        else:  # with date
-            for i in range(len(dau)):
-                if dau[i]:
-                    if tax and (factor in self.kpi_taxable):
-                        if fdata[i][1]:
-                            fdata[i][1] = round((fdata[i][1] / dau[i])*(1-tax),
-                                                4)
-                    else:
-                        fdata[i][1] = round(fdata[i][1] / dau[i], 4)
-                else:
-                    fdata[i][1] = 0
-            data = fdata
+            if dau == 0:
+                res = 0
+            elif isinstance(dau, list) and dau[1] == 0:
+                res = [0]
+            elif isinstance(dau, list):
+                res = [dau[0], kpi[1] / dau[1]]
+            else:
+                res = kpi / dau
 
-        return data
+            results.append([res])
+
+        return results
 
     def get_few_kpi(self, factor_lst, with_date=True, per_user=False,
                     currency=None, params=None, tax=None):
