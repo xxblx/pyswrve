@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os.path
+from urllib.parse import urljoin
 from datetime import datetime, timedelta
 from configparser import SafeConfigParser
 
@@ -31,10 +32,16 @@ class SwrveSession:
     conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
     __conf = SafeConfigParser()
 
-    def __init__(self, api_key=None, personal_key=None, section=None,
-                 conf_path=None):
+    __api_url_us = 'https://dashboard.swrve.com/api/1/exporter/'
+    __api_url_eu = 'https://eu-dashboard.swrve.com/api/1/exporter/'
+    _api_url = None
+
+    def __init__(self, region='us', api_key=None, personal_key=None,
+                 section=None, conf_path=None):
         """ __init__
 
+        :param region: [:class:`str`] us or eu region, it defines domain
+            in urls - dashboard.swrve.com or eu-dashboard.swrve.com
         :param api_key: [:class:`str`] API Key from Swrve Dashboard -
             Setup -  Integration Settings - App Information
         :param personal_key: [:class:`str`] Your personal key from
@@ -62,6 +69,11 @@ class SwrveSession:
             'api_key': api_key,
             'personal_key': personal_key
         }
+
+        if region == 'us':
+            self._api_url = self.__api_url_us
+        elif region == 'eu':
+            self._api_url = self.__api_url_eu
 
     def save_config(self):
         """ Save params to config file """
@@ -140,8 +152,7 @@ class SwrveSession:
             a list of values, it depends on with_date arg
         """
 
-        # Request url
-        url = 'https://dashboard.swrve.com/api/1/exporter/kpi/%s.json' % kpi
+        url = urljoin(self._api_url, 'kpi/%s.json' % kpi)
         params = self._params.copy()
         if currency:
             params['currency'] = currency
