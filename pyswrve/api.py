@@ -198,40 +198,6 @@ class SwrveSession:
 
         return results
 
-    def get_few_kpi(self, factor_lst, with_date=True, per_user=False,
-                    currency=None, params=None, tax=None):
-        """ Request data for few different KPI factors
-
-        :rtype: :class:`list`
-        """
-
-        params = params or dict(self.defaults)  # request params
-        if currency:
-            params['currency'] = currency  # cash, coins, etc...
-
-        if per_user:
-            get_func = self.get_kpi_dau
-        else:
-            get_func = self.get_kpi
-
-        count_index = 0
-        results = []
-        for factor in factor_lst:
-            if count_index == 0:
-
-                if with_date:
-                    results = get_func(factor, tax=tax)
-                else:
-                    results = [[i] for i in get_func(factor, False, tax=tax)]
-                count_index += 1
-
-            else:  # > 0
-                data = get_func(factor, False, tax=tax)
-                for i in range(len(data)):
-                    results[i] += [data[i]]
-
-        return results
-
     def get_evt_lst(self, params=None):
         """
         Request list with all events from swrve
