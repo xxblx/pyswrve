@@ -129,7 +129,7 @@ class SwrveSession:
                 error['error'] = req.json()['error']
             except ValueError:
                 pass
-            raise SwrveApiException(error, req.status_code, params, url)
+            raise SwrveApiException(error, req.status_code, url, params)
 
         return req.json()
 
