@@ -209,47 +209,36 @@ class SwrveSession:
 
         return results
 
-    def get_evt_lst(self, params=None):
+    def get_evt_lst(self):
         """
-        Request list with all events from swrve
+        Request project events list
 
-        :rtype: :class:`list`
-        """
-
-        # Request url
-        url = 'https://dashboard.swrve.com/api/1/exporter/event/list'
-        params = params or dict(self.defaults)  # request params
-
-        req = requests.get(url, params=params).json()  # do request
-        # Request errors
-        if isinstance(req, dict):
-            if 'error' in req.keys():
-                print('Error: %s' % req['error'])
-                return
-
-        return req
-
-    def get_payload_lst(self, ename=None, params=None):
-        """
-        Request payloads list for event
-
-        :rtype: :class:`list`
+        :return: [:class:`list`] a list with events
         """
 
-        # Request url
-        url = 'https://dashboard.swrve.com/api/1/exporter/event/payloads'
-        params = params or dict(self.defaults)  # request params
-        if ename:
-            params['name'] = ename
+        url = urljoin(self._api_url, 'event/list')
+        params = self._params.copy()
 
-        req = requests.get(url, params=params).json()  # do request
-        # Request errors
-        if isinstance(req, dict):
-            if 'error' in req.keys():
-                print('Error: %s' % req['error'])
-                return
+        results = self.send_api_request(url, params)
+        data = results[0]['data']
 
-        return req
+        return data
+
+    def get_payload_lst(self, evt_name):
+        """
+        Request event payloads list
+
+        :return: [:class:`list`] a list with payloads
+        """
+
+        url = urljoin(self._api_url, 'event/payloads')
+        params = self._params.copy()
+        params['name'] = evt_name
+
+        results = self.send_api_request(url, params)
+        data = results[0]['data']
+
+        return data
 
     def get_evt_stat(self, ename=None, payload=None, payload_val=None,
                      payload_sum=None, with_date=True, per_user=False,
