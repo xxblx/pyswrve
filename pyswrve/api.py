@@ -210,8 +210,7 @@ class SwrveSession:
         return results
 
     def get_evt_lst(self):
-        """
-        Request project events list
+        """ Request project events list
 
         :return: [:class:`list`] a list with events
         """
@@ -225,8 +224,7 @@ class SwrveSession:
         return data
 
     def get_payload_lst(self, evt_name):
-        """
-        Request event payloads list
+        """ Request event payloads list
 
         :return: [:class:`list`] a list with payloads
         """
@@ -385,20 +383,14 @@ If you use payload value or sum then you need to set payload too')
         return data
 
     def get_segment_lst(self, params=None):
-        """ Get List of all segments
+        """ Request prject segments list
 
-        :rtype: :class:`list`
+        :return: [:class:`list`] a list with segments
         """
 
-        # Request url
-        url = 'https://dashboard.swrve.com/api/1/exporter/segment/list'
-        params = params or dict(self.defaults)  # request params
+        url = urljoin(self._api_url, 'segment/list')
+        params = self._params.copy()
+        results = self.send_api_request(url, params)
+        data = results[0]['data']
 
-        req = requests.get(url, params=params).json()  # do request
-        # Request errors
-        if isinstance(req, dict):
-            if 'error' in req.keys():
-                print('Error: %s' % req['error'])
-                return
-
-        return req
+        return data
