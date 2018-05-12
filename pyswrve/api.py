@@ -217,11 +217,9 @@ class SwrveSession:
 
         url = urljoin(self._api_url, 'event/list')
         params = self._params.copy()
-
         results = self.send_api_request(url, params)
-        data = results[0]['data']
 
-        return data
+        return results
 
     def get_payload_lst(self, evt_name):
         """ Request event payloads list
@@ -232,11 +230,9 @@ class SwrveSession:
         url = urljoin(self._api_url, 'event/payloads')
         params = self._params.copy()
         params['name'] = evt_name
-
         results = self.send_api_request(url, params)
-        data = results[0]['data']
 
-        return data
+        return results
 
     def get_evt_stat(self, ename=None, payload=None, payload_val=None,
                      payload_sum=None, with_date=True, per_user=False,
@@ -391,6 +387,5 @@ If you use payload value or sum then you need to set payload too')
         url = urljoin(self._api_url, 'segment/list')
         params = self._params.copy()
         results = self.send_api_request(url, params)
-        data = results[0]['data']
 
-        return data
+        return results
