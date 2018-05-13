@@ -73,14 +73,17 @@ class SwrveApi:
     def set_param(self, key, val):
         self._params[key] = val
 
-    def send_api_request(self, url, params):
+    def send_api_request(self, url, **kwargs):
         """ Send GET request to Swrve Export API
 
         :param url: [:class:`str`] url for request
-        :param params: [:class:`dict`] dictionary with request params
         :returns: [:class:`dict`] request results
         :raises SwrveApiException: if request status_code != 200
         """
+
+        params = self._params.copy()
+        dct = {k: kwargs[k] for k in kwargs if kwargs[k] is not None}
+        params.update(dct)
 
         req = requests.get(url, params=params)
         if req.status_code != 200:

@@ -3,8 +3,6 @@
 from urllib.parse import urljoin
 from datetime import datetime, timedelta
 
-import requests
-
 from .api import SwrveApi
 
 
@@ -75,7 +73,8 @@ class SwrveExportApi(SwrveApi):
         self.set_param('start', start)
         self.set_param('stop', stop)
 
-    def get_kpi(self, kpi, with_date=True, currency=None, multiplier=None):
+    def get_kpi(self, kpi, with_date=True, currency=None, segment=None,
+                multiplier=None):
         """ Request the kpi stats
 
         :param kpi: [:class:`str`] the kpi's name, one from
@@ -87,6 +86,7 @@ class SwrveExportApi(SwrveApi):
             [126.0, 116.0]
         :param currency: [:class:`str`] in-project currency, used for kpis
             like currency_given
+        :param segment: [:class:`str`] request stats for specified segment
         :param multiplier: [:class:`float`] revenue multiplier like in Swrve
             Dashboard - Setup - Report Settings - Reporting Revenue,
             it applies to revenue, arpu and arppu
@@ -95,11 +95,7 @@ class SwrveExportApi(SwrveApi):
         """
 
         url = urljoin(self._api_url, 'kpi/%s.json' % kpi)
-        params = self._params.copy()
-        if currency:
-            params['currency'] = currency
-
-        data = self.send_api_request(url, params)
+        data = self.send_api_request(url, currency=currency, segment=segment)
         results = data[0]['data']
 
         if multiplier is not None and kpi in self.kpi_taxable:
@@ -110,7 +106,8 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
-    def get_kpi_dau(self, kpi, with_date=True, currency=None, multiplier=None):
+    def get_kpi_dau(self, kpi, with_date=True, currency=None, segment=None,
+                    multiplier=None):
         """" Request the kpi stats and divide every value with DAU
 
         :param kpi: [:class:`str`] the kpi's name, one from
@@ -122,6 +119,7 @@ class SwrveExportApi(SwrveApi):
             [126.0, 116.0]
         :param currency: [:class:`str`] in-project currency, used for kpis
             like currency_given
+        :param segment: [:class:`str`] request stats for specified segment
         :param multiplier: [:class:`float`] revenue multiplier like in Swrve
             Dashboard - Setup - Report Settings - Reporting Revenue,
             it applies to revenue, arpu and arppu
@@ -131,7 +129,7 @@ class SwrveExportApi(SwrveApi):
 
         data = {}
         for k in ('dau', kpi):
-            data[k] = self.get_kpi(k, with_date, currency, multiplier)
+            data[k] = self.get_kpi(k, with_date, currency, segment, multiplier)
 
         results = []
         for idx in range(len(data['dau'])):
@@ -151,7 +149,7 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
-    def get_evt(self, evt_name, with_date=True):
+    def get_evt(self, evt_name, with_date=True, segment=None):
         """ Request event stats
 
         :param evt_name: [:class:`str`] the event name
@@ -160,21 +158,20 @@ class SwrveExportApi(SwrveApi):
             the result is a list of lists, if `with_date` setted to `True`
             the original result is modifing to list of values like
             [126.0, 116.0]
+        :param segment: [:class:`str`] request stats for specified segment
         :return: [:class:`list`] a list of lists with dates and values or
             a list of values, it depends on with_date arg
         """
 
         url = urljoin(self._api_url, 'event/count')
-        params = self._params.copy()
-        params['name'] = evt_name
-        data = self.send_api_request(url, params)
+        data = self.send_api_request(url, name=evt_name, segment=segment)
         results = data[0]['data']
         if not with_date:
             results = [i[1] for i in data]
 
         return results
 
-    def get_evt_dau(self, evt_name, with_date=True):
+    def get_evt_dau(self, evt_name, with_date=True, segment=None):
         """ Request event stats and divide every value with DAU
 
         :param evt_name: [:class:`str`] the event name
@@ -183,13 +180,14 @@ class SwrveExportApi(SwrveApi):
             the result is a list of lists, if `with_date` setted to `True`
             the original result is modifing to list of values like
             [126.0, 116.0]
+        :param segment: [:class:`str`] request stats for specified segment
         :return: [:class:`list`] a list of lists with dates and values or
             a list of values, it depends on with_date arg
         """
 
         data = {
-            'dau': self.get_kpi('dau', with_date),
-            evt_name: self.get_evt(evt_name, with_date)
+            'dau': self.get_kpi('dau', with_date, segment=segment),
+            evt_name: self.get_evt(evt_name, with_date, segment)
         }
 
         results = []
@@ -217,8 +215,7 @@ class SwrveExportApi(SwrveApi):
         """
 
         url = urljoin(self._api_url, 'event/list')
-        params = self._params.copy()
-        results = self.send_api_request(url, params)
+        results = self.send_api_request(url)
 
         return results
 
@@ -255,10 +252,8 @@ class SwrveExportApi(SwrveApi):
         """
 
         url = urljoin(self._api_url, 'event/payload')
-        params = self._params.copy()
-        params['name'] = evt_name
-        params['payload_key'] = payload_key
-        data = self.send_api_request(url, params)
+        data = self.send_api_request(url, name=evt_name,
+                                     payload_key=payload_key)
 
         if not with_date:
             for dct in data:
@@ -294,95 +289,78 @@ class SwrveExportApi(SwrveApi):
         """
 
         url = urljoin(self._api_url, 'event/payloads')
-        params = self._params.copy()
-        params['name'] = evt_name
-        results = self.send_api_request(url, params)
+        results = self.send_api_request(url, name=evt_name)
 
         return results
 
-    def get_user_cohorts(self, cohort_type='retention'):
+    def get_user_cohorts(self, cohort_type='retention', segment=None):
         """ Request user cohorts data
 
         :param cohort_type: [:class:`str`] the type of cohort data to be
             requested: retention, avg_sessions, avg_playtime, avg_revenue or
             total_revenue
+        :param segment: [:class:`str`] request stats for specified segment
         :return: [:class:`dict`] a dict where keys are where cohorts dates
             and values are dicts with cohort info
         """
 
         url = urljoin(self._api_url, 'cohorts/daily')
-        params = self._params.copy()
-        params['cohort_type'] = cohort_type
-        results = self.send_api_request(url, params)
+        results = self.send_api_request(url, cohort_type=cohort_type,
+                                        segment=segment)
 
         return results[0]['data']
 
-    def get_item_sales(self, item=None, tag=None, currency=None, revenue=True,
-                       with_date=True, per_user=False, params=None):
+    def get_item_sales(self, uid=None, tag=None, currency=None,  segment=None):
+        """ Request the sales (count) of the item(s). If no uid or tag is
+        specified, requests all items.
+
+        :param uid: [:class:`str`] uid of the item
+        :param tag: [:class:`str`] tag of the items
+        :param currency: [:class:`str`] if currency is None requests for all
+        :param segment: request stats for specified segment
+        :return: [:class:`list`] a list of dicts, one dict - one currency
         """
-        Request count of item sales or revenue from items sales
 
-        :rtype: :class:`dict`
+        url = urljoin(self._api_url, 'item/sales')
+        results = self.send_api_request(url, uid=uid, tag=tag,
+                                        currency=currency, segment=segment)
+        return results
+
+    def get_item_revenue(self, uid=None, tag=None, currency=None,
+                         segment=None):
+        """ Request revenue (count * price) from the item(s). If no uid or
+        tag is specified, requests all items.
+
+        :param uid: [:class:`str`] uid of the item
+        :param tag: [:class:`str`] tag of the items
+        :param currency: [:class:`str`] if currency is None requests for all
+        :param segment: request stats for specified segment
+        :return: [:class:`list`] a list of dicts, one dict - one currency
         """
 
-        params = params or dict(self.defaults)  # request params
-        if item:
-            params['uid'] = item
-        if tag:
-            params['tag'] = tag
-        if currency:
-            params['currency'] = currency
+        url = urljoin(self._api_url, 'item/revenue')
+        results = self.send_api_request(url, uid=uid, tag=tag,
+                                        currency=currency, segment=segment)
+        return results
 
-        if revenue:
-            url = 'https://dashboard.swrve.com/api/1/exporter/item/revenue'
-        else:
-            url = 'https://dashboard.swrve.com/api/1/exporter/item/sales'
+    def get_item_tag(self, tag):
+        """ Request uids of all items that are associated with the tag
 
-        req = requests.get(url, params=params).json()  # do request
-        # Request errors
-        if isinstance(req, dict):
-            if 'error' in req.keys():
-                print('Error: %s' % req['error'])
-                return
+        :param tag: [:class:`str`] resources tag
+        :return: [:class:`list`] list of dicts with uids and names
+        """
 
-        data = {}
-        for d in req:
-            # Key for data dict 'item name - currency'
-            k = '%s - %s' % (d['name'], d['currency'])
-            if not with_date:
-                data[k] = [i[1] for i in d['data']]
-            else:
-                data[k] = d['data']
+        url = urljoin(self._api_url, 'item/tag')
+        results = self.send_api_request(url, tag=tag)
+        return results
 
-        if per_user:  # calc for one user
-            dau = self.get_kpi('dau', False, params=params)
-
-            for key in data.keys():
-                for i in range(len(dau)):
-                    if not with_date:
-                        # Check does dau[i] > 0 for ZeroDivisionError fix
-                        if dau[i]:
-                            data[key][i] = round(data[key][i] / dau[i], 4)
-                        else:
-                            data[key][i] = 0
-                    else:
-                        if dau[i]:
-                            data[key][i][1] = round(
-                                data[key][i][1] / dau[i], 4
-                            )
-                        else:
-                            data[key][i][1] = 0
-
-        return data
-
-    def get_segment_lst(self, params=None):
+    def get_segment_lst(self):
         """ Request prject segments list
 
         :return: [:class:`list`] a list with segments
         """
 
         url = urljoin(self._api_url, 'segment/list')
-        params = self._params.copy()
-        results = self.send_api_request(url, params)
+        results = self.send_api_request(url)
 
         return results
