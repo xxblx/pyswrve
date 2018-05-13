@@ -10,6 +10,7 @@ from .api import SwrveApi
 
 class SwrveExportApi(SwrveApi):
     """ Class for requesting stats with Swrve Export API
+
     https://docs.swrve.com/swrves-apis/non-client-apis/swrve-export-api-guide
     """
 

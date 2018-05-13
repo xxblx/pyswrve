@@ -10,6 +10,7 @@ from .exceptions import SwrveApiException
 
 class SwrveApi:
     """ Base class for senfing requests to Swrve Non-Client APIs
+
     https://docs.swrve.com/swrves-apis/non-client-apis
     """
 
