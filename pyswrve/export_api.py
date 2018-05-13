@@ -300,9 +300,22 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
-    # TODO: User Cohorts Export
-    # https://docs.swrve.com/swrves-apis/non-client-apis/\
-    # swrve-export-api-guide/#User_Cohorts_Export
+    def get_user_cohorts(self, cohort_type='retention'):
+        """ Request user cohorts data
+
+        :param cohort_type: [:class:`str`] the type of cohort data to be
+            requested: retention, avg_sessions, avg_playtime, avg_revenue or
+            total_revenue
+        :return: [:class:`dict`] a dict where keys are where cohorts dates
+            and values are dicts with cohort info
+        """
+
+        url = urljoin(self._api_url, 'cohorts/daily')
+        params = self._params.copy()
+        params['cohort_type'] = cohort_type
+        results = self.send_api_request(url, params)
+
+        return results[0]['data']
 
     def get_item_sales(self, item=None, tag=None, currency=None, revenue=True,
                        with_date=True, per_user=False, params=None):
