@@ -10,24 +10,24 @@ pyswrve is an unofficial Python wrapper for [Swrve Export API](http://docs.swrve
 
 ```
 import pyswrve
-s = pyswrve.API(api_key='some_key', personal_key='some_key2')
-s.set_dates(period='week', period_count=2)  # last 2 weeks
+
+swrve = pyswrve.API(api_key='your_app_key', personal_key='you_personal_key')
 ```
 
 You can save api_key and personal_key to config file (default: `$HOME/.pyswrve`) with `save_config` method
 
 ```
-import pyswrve
-s = pyswrve.API(api_key='some_key', personal_key='some_key2')
-s.save_config()
+swrve.save_config()
 ```
 
 ```
-import pyswrve
-s = pyswrve.API()
-s.set_dates(start='2015-01-31', stop='2015-03-15')
-s.get_evt_stat(ename='some.event.name', payload='level', payload_val='25')
-{'25': [['D-2015-01-31', 126.00], ['D-2015-02-01', 176.00]]}
-```
+from datetime import datetime
 
-[Check wiki for details](https://github.com/xxblx/pyswrve/wiki).
+start = datetime(2015, 1, 31)
+stop = datetime(2015, 2, 1)
+
+swrve.set_dates(start, stop)
+
+swrve.get_kpi('dau', segment='SomeActiveUsers')
+[['D-2015-01-31', 19232.00], ['D-2015-02-01', 18762.00]]
+```
