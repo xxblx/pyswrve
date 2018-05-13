@@ -74,10 +74,10 @@ class SwrveApi:
         self._params[key] = val
 
     def send_api_request(self, url, **kwargs):
-        """ Send GET request to Swrve Export API
+        """ Send GET request to Swrve API
 
         :param url: [:class:`str`] url for request
-        :returns: [:class:`dict`] request results
+        :return: [:class:`dict`] request results
         :raises SwrveApiException: if request status_code != 200
         """
 
@@ -85,13 +85,13 @@ class SwrveApi:
         dct = {k: kwargs[k] for k in kwargs if kwargs[k] is not None}
         params.update(dct)
 
-        req = requests.get(url, params=params)
-        if req.status_code != 200:
+        res = requests.get(url, params=params)
+        if res.status_code != 200:
             error = None
             try:
-                error['error'] = req.json()['error']
+                error['error'] = res.json()['error']
             except ValueError:
                 pass
-            raise SwrveApiException(error, req.status_code, url, params)
+            raise SwrveApiException(error, res.status_code, url, params)
 
-        return req.json()
+        return res.json()
