@@ -79,7 +79,7 @@ class SwrveExportApi(SwrveApi):
         """ Request the kpi stats
 
         :param kpi: [:class:`str`] the kpi's name, one from
-            `SwrveSession.kpi_factors`
+            `SwrveExportApi.kpi_factors`
         :param with_date: [`bool`] by default swrve return every element
             as [['D-2015-01-31', 126.0], ['D-2015-01-31', 116.0]] so
             the result is a list of lists, if `with_date` setted to `True`
@@ -99,22 +99,22 @@ class SwrveExportApi(SwrveApi):
         if currency:
             params['currency'] = currency
 
-        results = self.send_api_request(url, params)
-        data = results[0]['data']
+        data = self.send_api_request(url, params)
+        results = data[0]['data']
 
         if multiplier is not None and kpi in self.kpi_taxable:
-            data = [[i[0], i[1]*multiplier] for i in data]
+            results = [[i[0], i[1]*multiplier] for i in data]
 
         if not with_date:
-            data = [i[1] for i in data]
+            results = [i[1] for i in data]
 
-        return data
+        return results
 
     def get_kpi_dau(self, kpi, with_date=True, currency=None, multiplier=None):
         """" Request the kpi stats and divide every value with DAU
 
         :param kpi: [:class:`str`] the kpi's name, one from
-            `SwrveSession.kpi_factors`
+            `SwrveExportApi.kpi_factors`
         :param with_date: [`bool`] by default swrve return every element
             as [['D-2015-01-31', 126.0], ['D-2015-01-31', 116.0]] so
             the result is a list of lists, if `with_date` setted to `True`
@@ -135,17 +135,76 @@ class SwrveExportApi(SwrveApi):
 
         results = []
         for idx in range(len(data['dau'])):
-            dau = data['dau'][idx]
-            kpi = data[kpi][idx]
+            _dau = data['dau'][idx]
+            _kpi = data[kpi][idx]
 
-            if dau == 0:
+            if _dau == 0:
                 res = 0
-            elif isinstance(dau, list) and dau[1] == 0:
+            elif isinstance(_dau, list) and _dau[1] == 0:
                 res = [0]
-            elif isinstance(dau, list):
-                res = [dau[0], kpi[1] / dau[1]]
+            elif isinstance(_dau, list):
+                res = [_dau[0], _kpi[1] / _dau[1]]
             else:
-                res = kpi / dau
+                res = _kpi / _dau
+
+            results.append([res])
+
+        return results
+
+    def get_evt(self, evt_name, with_date=True):
+        """ Request event stats
+
+        :param evt_name: [:class:`str`] the event name
+        :param with_date: [`bool`] by default swrve return every element
+            as [['D-2015-01-31', 126.0], ['D-2015-01-31', 116.0]] so
+            the result is a list of lists, if `with_date` setted to `True`
+            the original result is modifing to list of values like
+            [126.0, 116.0]
+        :return: [:class:`list`] a list of lists with dates and values or
+            a list of values, it depends on with_date arg
+        """
+
+        url = urljoin(self._api_url, 'event/count')
+        params = self._params.copy()
+        params['name'] = evt_name
+        data = self.send_api_request(url, params)
+        results = data[0]['data']
+        if not with_date:
+            results = [i[1] for i in data]
+
+        return results
+
+    def get_evt_dau(self, evt_name, with_date=True):
+        """ Request event stats and divide every value with DAU
+
+        :param evt_name: [:class:`str`] the event name
+        :param with_date: [`bool`] by default swrve return every element
+            as [['D-2015-01-31', 126.0], ['D-2015-01-31', 116.0]] so
+            the result is a list of lists, if `with_date` setted to `True`
+            the original result is modifing to list of values like
+            [126.0, 116.0]
+        :return: [:class:`list`] a list of lists with dates and values or
+            a list of values, it depends on with_date arg
+        """
+
+        data = {
+            'dau': self.get_kpi('dau', with_date),
+            evt_name: self.get_evt(evt_name, with_date)
+        }
+
+        results = []
+        for idx in range(len(data['dau'])):
+            _dau = data['dau'][idx]
+            _evt = data[evt_name][idx]
+
+            if _dau == 0:
+                res = 0
+            elif isinstance(_dau, list) and _dau[1] == 0:
+                res = [0]
+            elif isinstance(_dau, list):
+                res = [_dau[0], _evt[1] / _dau[1]]
+            else:
+                res = _evt / _dau
 
             results.append([res])
 
@@ -163,9 +222,74 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
+    def get_payload(self, evt_name, payload_key, with_date=True,
+                    default_struct=False):
+        """ Request stats for the event with specified payload key
+
+        :param evt_name: [:class:`str`] the event name
+        :param payload_key: [:class:`str`] the payload key
+        :param with_date: [`bool`] by default swrve return every element
+            as [['D-2015-01-31', 126.0], ['D-2015-01-31', 116.0]] so
+            the result is a list of lists, if `with_date` setted to `True`
+            the original result is modifing to list of values like
+            [126.0, 116.0]
+        :param default_struct: [`bool`] default response data structure are
+
+            `[{'data': [['D-2017-01-01', 160], ['D-2018-01-02', 116]],
+            'event_name': 'levelup',
+            'name': 'levelup/level/1',
+            'payload_key': 'level',
+            'payload_value': '1},
+            {'data': [['D-2017-01-01', 260], ['D-2018-01-02', 216]],
+            'event_name': 'levelup',
+            'name': 'levelup/level/2',
+            'payload_key': 'level',
+            'payload_value': '2'}]`
+
+            by setting default_struct = True the structure are transforming in
+
+            `[{'timeline': 'D-2018-01-01', '1': 116, '2': 260},
+            {'timeline': 'D-2018-01-02', '1': 116, '2': 216}]`
+        :return: [:class:`list`] a list of dicts with stats for
+            payload key in event
+        """
+
+        url = urljoin(self._api_url, 'event/payload')
+        params = self._params.copy()
+        params['name'] = evt_name
+        params['payload_key'] = payload_key
+        data = self.send_api_request(url, params)
+
+        if not with_date:
+            for dct in data:
+                dct['data'] = [i[1] for i in dct['data']]
+
+        if default_struct:
+            return data
+
+        results = {}
+        for dct in data:
+            paylod_value = dct['payload_value']
+
+            for idx in range(len(dct['data'])):
+                if isinstance(dct['data'][idx], list):
+                    results_key, value = dct['data'][idx]
+                else:
+                    results_key = idx
+                    value = dct['data'][idx]
+
+                if results_key not in results:
+                    results[results_key] = {'timeline': results_key}
+                results[results_key][paylod_value] = value
+
+        results = sorted(results.values(), key=lambda x: x['timeline'])
+
+        return results
+
     def get_payload_lst(self, evt_name):
         """ Request event payloads list
 
+        :param evt_name: [:class:`str`] the event name
         :return: [:class:`list`] a list with payloads
         """
 
@@ -176,91 +300,9 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
-    def get_evt_stat(self, ename=None, payload=None, payload_val=None,
-                     payload_sum=None, with_date=True, per_user=False,
-                     params=None):
-        """ Request events triggering count with(out) payload key.
-        If with payload, keys are payload's values, else key is an event name.
-
-        :rtype: :class:`dict`
-        """
-
-        if (payload_val or payload_sum) and not payload:
-            print('\
-If you use payload value or sum then you need to set payload too')
-            return
-
-        params = params or dict(self.defaults)  # request params
-        if ename:
-            params['name'] = ename
-        if payload:
-            params['payload_key'] = payload
-
-        if payload:
-            url = 'https://dashboard.swrve.com/api/1/exporter/event/payload'
-        else:
-            url = 'https://dashboard.swrve.com/api/1/exporter/event/count'
-
-        req = requests.get(url, params=params).json()  # do request
-        # Request errors
-        if isinstance(req, dict):
-            if 'error' in req.keys():
-                print('Error: %s' % req['error'])
-                return
-
-        data = {}
-        if payload and payload_val:
-            payload_val = str(payload_val)
-            for d in req:
-                if d['payload_value'] == payload_val:
-                    data[payload_val] = d['data']
-                    break
-
-        elif payload:  # with payload
-            for d in req:
-                if with_date:  # key is a payload value
-                    data[d['payload_value']] = d['data']
-                else:
-                    data[d['payload_value']] = [i[1] for i in d['data']]
-
-        else:  # without payload key is an event name
-            if not with_date:
-                data[req[0]['name']] = [i[1] for i in req[0]['data']]
-            else:
-                data[req[0]['name']] = req[0]['data']
-
-            if per_user:  # calc for one user
-                dau = self.get_kpi('dau', False, params=params)
-                key = list(data.keys())[0]  # one element => first key
-                for i in range(len(dau)):
-                    if not with_date:
-                        # Check does dau[i] > 0 for ZeroDivisionError fix
-                        if dau[i]:
-                            data[key][i] = round(data[key][i] / dau[i], 4)
-                        else:
-                            data[key][i] = 0
-                    else:
-                        if dau[i]:
-                            data[key][i][1] = round(
-                                data[key][i][1] / dau[i], 4
-                            )
-                        else:
-                            data[key][i][1] = 0
-
-        # Aggregate payload values
-        if payload and payload_sum:
-            for key in data:
-                val = 0
-                if not with_date:
-                    for i in data[key]:
-                        val += i
-                else:
-                    for i in data[key]:
-                        val += i[1]
-
-                data[key] = val
-
-        return data
+    # TODO: User Cohorts Export
+    # https://docs.swrve.com/swrves-apis/non-client-apis/\
+    # swrve-export-api-guide/#User_Cohorts_Export
 
     def get_item_sales(self, item=None, tag=None, currency=None, revenue=True,
                        with_date=True, per_user=False, params=None):
