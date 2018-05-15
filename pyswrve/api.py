@@ -87,11 +87,10 @@ class SwrveApi:
 
         res = requests.get(url, params=params)
         if res.status_code != 200:
-            error = None
             try:
-                error['error'] = res.json()['error']
+                error = res.json()['error']
             except ValueError:
-                pass
+                error = None
             raise SwrveApiException(error, res.status_code, url, params)
 
         return res.json()

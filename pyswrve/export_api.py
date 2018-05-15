@@ -66,9 +66,10 @@ class SwrveExportApi(SwrveApi):
             days = period_len * self.period_lens(period)
             start = stop - timedelta(days=days)
 
-        for _date in (start, stop):
-            if isinstance(_date, datetime):
-                _date = _date.strftime('%Y-%m-%d')
+        if isinstance(start, datetime):
+            start = start.strftime('%Y-%m-%d')
+        if isinstance(stop, datetime):
+            stop = stop.strftime('%Y-%m-%d')
 
         self.set_param('start', start)
         self.set_param('stop', stop)
