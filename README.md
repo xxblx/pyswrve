@@ -1,6 +1,8 @@
 # pyswrve
 
-pyswrve is an unofficial Python wrapper for [Swrve Export API](http://docs.swrve.com/developer-documentation/api-guides/non-client-apis/swrve-export-api-guide/)
+pyswrve is an unofficial Python wrapper for [Swrve Non-Client APIs](https://docs.swrve.com/swrves-apis/non-client-apis/): 
+* [Export API](http://docs.swrve.com/developer-documentation/api-guides/non-client-apis/swrve-export-api-guide/) (ready)
+* [Items API](https://docs.swrve.com/swrves-apis/non-client-apis/swrve-items-api-guide/) (todo)
 
 # Installation
 
@@ -11,7 +13,7 @@ pyswrve is an unofficial Python wrapper for [Swrve Export API](http://docs.swrve
 ```
 import pyswrve
 
-swrve = pyswrve.API(api_key='your_app_key', personal_key='you_personal_key')
+swrve = pyswrve.ExportApi(api_key='your_app_key', personal_key='you_personal_key')
 ```
 
 You can save api_key and personal_key to config file (default: `$HOME/.pyswrve`) with `save_config` method
@@ -20,6 +22,7 @@ You can save api_key and personal_key to config file (default: `$HOME/.pyswrve`)
 swrve.save_config()
 ```
 
+Try to get DAU stats
 ```
 from datetime import datetime
 
