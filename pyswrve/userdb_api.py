@@ -83,7 +83,7 @@ swrve-export-api-guide/#User_DB_Export
                 os.makedirs(section_dir)
                 results = self.download_urls(
                     schemas_dir,
-                    urls_dct['schemas'].values(),
+                    urls_dct['data_files'].values(),
                     workers=workers
                 )
                 downloaded_data += results
