@@ -57,6 +57,7 @@ swrve-export-api-guide/#User_DB_Export
         :param exclude_schemas: [`bool`] if True method doesn't download
             db schemas
         :param workers: [:class:`int`] count of workers for downloading
+        :return: [:class:`list`] list of downloaded files
         """
 
         urls_dct = self.get_urls()
