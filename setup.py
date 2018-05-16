@@ -12,7 +12,7 @@ setup(
     author='Oleg Kozlov',
     author_email='xxblx@posteo.org',
 
-    description='Unofficial Python wrapper for Swrve Export API',
+    description='Unofficial Python wrapper for Swrve Non-Client APIs',
 
     requires=['requests'],
 
