@@ -1,0 +1,6 @@
+{
+    "evt": {"evt_name": "some_event", "payload_key": "some_key"},
+    "item": {"uid": "some_resource_uid"},
+    "tag": {"tag": "some_resource_tag"}   
+}
+
