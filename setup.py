@@ -8,14 +8,17 @@ setup(
     name='pyswrve',
     version=__version__,
     license='MIT License',
+    url='https://github.com/xxblx/pyswrve',
 
     author='Oleg Kozlov',
     author_email='xxblx@posteo.org',
 
     description='Unofficial Python wrapper for Swrve Non-Client APIs',
+    long_description="""pyswrve is an unofficial Python wrapper for
+Swrve Non-Client APIs: Export API (ready) and Items API (todo).""",
 
     requires=['requests'],
-
+    platforms=['any'],
     packages=['pyswrve'],
 
     classifiers=[

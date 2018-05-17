@@ -22,4 +22,4 @@ class TestUserdbApi:
         assert isinstance(res, dict)
 
         keys = {'data_files', 'schemas', 'date'}
-        assert set(keys).issubset(res.keys())
+        assert set(keys).issubset(set(res.keys()))
