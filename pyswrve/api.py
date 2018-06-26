@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os.path
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 
 import requests
 
@@ -15,7 +15,7 @@ class SwrveApi:
     """
 
     conf_path = os.path.join(os.path.expanduser('~'), '.pyswrve')
-    __conf = SafeConfigParser()
+    __conf = ConfigParser()
 
     __api_url_us = 'https://dashboard.swrve.com/api/1/'
     __api_url_eu = 'https://eu-dashboard.swrve.com/api/1/'
