@@ -63,6 +63,9 @@ class SwrveApi:
     def save_config(self):
         """ Save params to config file """
 
+        if not self.__conf.has_section(self.section):
+            self.__conf.add_section(self.section)
+
         for key in self._params:
             val = self._params[key]
             self.__conf.set(self.section, key, val)
