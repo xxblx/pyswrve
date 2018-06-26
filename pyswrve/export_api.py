@@ -100,10 +100,10 @@ class SwrveExportApi(SwrveApi):
         results = data[0]['data']
 
         if multiplier is not None and kpi in self.kpi_taxable:
-            results = [[i[0], i[1]*multiplier] for i in data]
+            results = [[i[0], i[1]*multiplier] for i in results]
 
         if not with_date:
-            results = [i[1] for i in data]
+            results = [i[1] for i in results]
 
         return results
 
@@ -168,7 +168,7 @@ class SwrveExportApi(SwrveApi):
         data = self.send_api_request(url, name=evt_name, segment=segment)
         results = data[0]['data']
         if not with_date:
-            results = [i[1] for i in data]
+            results = [i[1] for i in results]
 
         return results
 
