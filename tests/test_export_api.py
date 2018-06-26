@@ -32,8 +32,14 @@ class TestExportApi:
     def test_get_kpi(self):
         api = ExportApi()
         api.set_dates(self.start, self.stop)
-        res = api.get_kpi('dau')
 
+        # With dates
+        res = api.get_kpi('dau')
+        assert isinstance(res, list)
+        assert len(res) == self.period_len
+
+        # Without dates
+        res = api.get_kpi('dau', with_date=False)
         assert isinstance(res, list)
         assert len(res) == self.period_len
 
@@ -43,8 +49,14 @@ class TestExportApi:
         api = ExportApi()
         api.set_dates(self.start, self.stop)
         evt_name = os.environ['evt_name']
-        res = api.get_evt(evt_name)
 
+        # With dates
+        res = api.get_evt(evt_name)
+        assert isinstance(res, list)
+        assert len(res) == self.period_len
+
+        # Without dates
+        res = api.get_evt(evt_name, with_date=False)
         assert isinstance(res, list)
         assert len(res) == self.period_len
 
