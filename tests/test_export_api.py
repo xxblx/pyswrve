@@ -35,6 +35,7 @@ class TestExportApi:
 
         res = api.get_kpi('dau')
         assert isinstance(res, list)
+        assert isinstance(res[0][0], str)
         assert len(res) == self.period_len
 
     @vcr.use_cassette(cassette_path % 'kpi-without-date',
@@ -47,6 +48,15 @@ class TestExportApi:
         assert isinstance(res, list)
         assert len(res) == self.period_len
 
+    @vcr.use_cassette(cassette_path % 'kpi-datetime',
+                      filter_query_parameters=skip_lst)
+    def test_get_kpi_datetime(self):
+        api = ExportApi()
+        api.set_dates(self.start, self.stop)
+
+        res = api.get_kpi('dau', as_datetime=True)
+        assert isinstance(res[0][0], datetime)
+
     @mock.patch.dict(os.environ, names_dct['evt'])
     @vcr.use_cassette(cassette_path % 'evt', filter_query_parameters=skip_lst)
     def test_get_evt(self):
@@ -56,6 +66,7 @@ class TestExportApi:
 
         res = api.get_evt(evt_name)
         assert isinstance(res, list)
+        assert isinstance(res[0][0], str)
         assert len(res) == self.period_len
 
     @mock.patch.dict(os.environ, names_dct['evt'])
@@ -69,6 +80,17 @@ class TestExportApi:
         res = api.get_evt(evt_name, with_date=False)
         assert isinstance(res, list)
         assert len(res) == self.period_len
+
+    @mock.patch.dict(os.environ, names_dct['evt'])
+    @vcr.use_cassette(cassette_path % 'evt-datetime',
+                      filter_query_parameters=skip_lst)
+    def test_get_evt_datetime(self):
+        api = ExportApi()
+        api.set_dates(self.start, self.stop)
+        evt_name = os.environ['evt_name']
+
+        res = api.get_evt(evt_name, as_datetime=True)
+        assert isinstance(res[0][0], datetime)
 
     @vcr.use_cassette(cassette_path % 'evt-lst',
                       filter_query_parameters=skip_lst)
