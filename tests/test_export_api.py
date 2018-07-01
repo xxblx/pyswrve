@@ -33,12 +33,16 @@ class TestExportApi:
         api = ExportApi()
         api.set_dates(self.start, self.stop)
 
-        # With dates
         res = api.get_kpi('dau')
         assert isinstance(res, list)
         assert len(res) == self.period_len
 
-        # Without dates
+    @vcr.use_cassette(cassette_path % 'kpi-without-date',
+                      filter_query_parameters=skip_lst)
+    def test_get_kpi_without_date(self):
+        api = ExportApi()
+        api.set_dates(self.start, self.stop)
+
         res = api.get_kpi('dau', with_date=False)
         assert isinstance(res, list)
         assert len(res) == self.period_len
@@ -50,12 +54,18 @@ class TestExportApi:
         api.set_dates(self.start, self.stop)
         evt_name = os.environ['evt_name']
 
-        # With dates
         res = api.get_evt(evt_name)
         assert isinstance(res, list)
         assert len(res) == self.period_len
 
-        # Without dates
+    @mock.patch.dict(os.environ, names_dct['evt'])
+    @vcr.use_cassette(cassette_path % 'evt-without-date',
+                      filter_query_parameters=skip_lst)
+    def test_get_evt_without_date(self):
+        api = ExportApi()
+        api.set_dates(self.start, self.stop)
+        evt_name = os.environ['evt_name']
+
         res = api.get_evt(evt_name, with_date=False)
         assert isinstance(res, list)
         assert len(res) == self.period_len
