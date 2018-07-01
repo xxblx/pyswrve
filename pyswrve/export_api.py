@@ -358,7 +358,6 @@ class SwrveExportApi(SwrveApi):
             and values are dicts with cohort info
         """
 
-        # datetime.strptime(date_part, fmt)
         url = urljoin(self._api_url, 'cohorts/daily')
         data = self.send_api_request(url, cohort_type=cohort_type,
                                      segment=segment)
