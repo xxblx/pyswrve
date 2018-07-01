@@ -75,7 +75,7 @@ class SwrveExportApi(SwrveApi):
         self.set_param('stop', stop)
 
     def get_kpi(self, kpi, with_date=True, currency=None, segment=None,
-                multiplier=None):
+                multiplier=None, **kwargs):
         """ Request the kpi stats
 
         :param kpi: [:class:`str`] the kpi's name, one from
@@ -96,7 +96,8 @@ class SwrveExportApi(SwrveApi):
         """
 
         url = urljoin(self._api_url, 'kpi/%s.json' % kpi)
-        data = self.send_api_request(url, currency=currency, segment=segment)
+        data = self.send_api_request(url, currency=currency, segment=segment,
+                                     **kwargs)
         results = data[0]['data']
 
         if multiplier is not None and kpi in self.kpi_taxable:
@@ -108,7 +109,7 @@ class SwrveExportApi(SwrveApi):
         return results
 
     def get_kpi_dau(self, kpi, with_date=True, currency=None, segment=None,
-                    multiplier=None):
+                    multiplier=None, **kwargs):
         """" Request the kpi stats and divide every value with DAU
 
         :param kpi: [:class:`str`] the kpi's name, one from
@@ -130,7 +131,8 @@ class SwrveExportApi(SwrveApi):
 
         data = {}
         for k in ('dau', kpi):
-            data[k] = self.get_kpi(k, with_date, currency, segment, multiplier)
+            data[k] = self.get_kpi(k, with_date, currency, segment, multiplier,
+                                   **kwargs)
 
         results = []
         for idx in range(len(data['dau'])):
@@ -150,7 +152,7 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
-    def get_evt(self, evt_name, with_date=True, segment=None):
+    def get_evt(self, evt_name, with_date=True, segment=None, **kwargs):
         """ Request event stats
 
         :param evt_name: [:class:`str`] the event name
@@ -165,14 +167,15 @@ class SwrveExportApi(SwrveApi):
         """
 
         url = urljoin(self._api_url, 'event/count')
-        data = self.send_api_request(url, name=evt_name, segment=segment)
+        data = self.send_api_request(url, name=evt_name, segment=segment,
+                                     **kwargs)
         results = data[0]['data']
         if not with_date:
             results = [i[1] for i in results]
 
         return results
 
-    def get_evt_dau(self, evt_name, with_date=True, segment=None):
+    def get_evt_dau(self, evt_name, with_date=True, segment=None, **kwargs):
         """ Request event stats and divide every value with DAU
 
         :param evt_name: [:class:`str`] the event name
@@ -187,8 +190,8 @@ class SwrveExportApi(SwrveApi):
         """
 
         data = {
-            'dau': self.get_kpi('dau', with_date, segment=segment),
-            evt_name: self.get_evt(evt_name, with_date, segment)
+            'dau': self.get_kpi('dau', with_date, segment=segment, **kwargs),
+            evt_name: self.get_evt(evt_name, with_date, segment, **kwargs)
         }
 
         results = []
@@ -311,7 +314,8 @@ class SwrveExportApi(SwrveApi):
 
         return results[0]['data']
 
-    def get_item_sales(self, uid=None, tag=None, currency=None,  segment=None):
+    def get_item_sales(self, uid=None, tag=None, currency=None,  segment=None,
+                       **kwargs):
         """ Request the sales (count) of the item(s). If no uid or tag is
         specified, requests all items.
 
@@ -324,11 +328,12 @@ class SwrveExportApi(SwrveApi):
 
         url = urljoin(self._api_url, 'item/sales')
         results = self.send_api_request(url, uid=uid, tag=tag,
-                                        currency=currency, segment=segment)
+                                        currency=currency, segment=segment,
+                                        **kwargs)
         return results
 
     def get_item_revenue(self, uid=None, tag=None, currency=None,
-                         segment=None):
+                         segment=None, **kwargs):
         """ Request revenue (count * price) from the item(s). If no uid or
         tag is specified, requests all items.
 
@@ -341,7 +346,8 @@ class SwrveExportApi(SwrveApi):
 
         url = urljoin(self._api_url, 'item/revenue')
         results = self.send_api_request(url, uid=uid, tag=tag,
-                                        currency=currency, segment=segment)
+                                        currency=currency, segment=segment,
+                                        **kwargs)
         return results
 
     def get_item_tag(self, tag):
