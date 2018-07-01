@@ -28,6 +28,15 @@ class SwrveExportApi(SwrveApi):
                    'arpu_monthly', 'arppu_monthly'}
     period_lens = {'day': 1, 'week': 7, 'month': 30, 'year': 360}
 
+    date_formats = {
+        'DH-': '%Y-%m-%d-%H',
+        'H-': '%Y-%m-%d-%H',
+        'MD-': '%Y-%m-%d',
+        'D-': '%Y-%m-%d',
+        'M-': '%Y-%m',
+        'Y-': '%Y'
+    }
+
     def __init__(self, region='us', api_key=None, personal_key=None,
                  section=None, conf_path=None):
         """ __init__
@@ -74,8 +83,23 @@ class SwrveExportApi(SwrveApi):
         self.set_param('start', start)
         self.set_param('stop', stop)
 
-    def get_kpi(self, kpi, with_date=True, currency=None, segment=None,
-                multiplier=None, **kwargs):
+    def to_datetime(self, date_str):
+        """ Create `datetime` object from string with specified format
+
+        :param date_str: [:class:`str`] string with date
+        :return: `datetime` object
+        """
+
+        for fmt_key in self.date_formats:
+            if date_str.startswith(fmt_key):
+                fmt = self.date_formats[fmt_key]
+                date_part = date_str.split(fmt_key)[1]
+                break
+
+        return datetime.strptime(date_part, fmt)
+
+    def get_kpi(self, kpi, with_date=True, as_datetime=False, currency=None,
+                segment=None, multiplier=None, **kwargs):
         """ Request the kpi stats
 
         :param kpi: [:class:`str`] the kpi's name, one from
@@ -85,6 +109,8 @@ class SwrveExportApi(SwrveApi):
             the result is a list of lists, if `with_date` setted to `True`
             the original result is modifing to list of values like
             [126.0, 116.0]
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param currency: [:class:`str`] in-project currency, used for kpis
             like currency_given
         :param segment: [:class:`str`] request stats for specified segment
@@ -105,11 +131,13 @@ class SwrveExportApi(SwrveApi):
 
         if not with_date:
             results = [i[1] for i in results]
+        elif as_datetime:
+            results = [[self.to_datetime(i[0]), i[1]] for i in results]
 
         return results
 
-    def get_kpi_dau(self, kpi, with_date=True, currency=None, segment=None,
-                    multiplier=None, **kwargs):
+    def get_kpi_dau(self, kpi, with_date=True, as_datetime=False,
+                    currency=None, segment=None, multiplier=None, **kwargs):
         """" Request the kpi stats and divide every value with DAU
 
         :param kpi: [:class:`str`] the kpi's name, one from
@@ -119,6 +147,8 @@ class SwrveExportApi(SwrveApi):
             the result is a list of lists, if `with_date` setted to `True`
             the original result is modifing to list of values like
             [126.0, 116.0]
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param currency: [:class:`str`] in-project currency, used for kpis
             like currency_given
         :param segment: [:class:`str`] request stats for specified segment
@@ -131,8 +161,8 @@ class SwrveExportApi(SwrveApi):
 
         data = {}
         for k in ('dau', kpi):
-            data[k] = self.get_kpi(k, with_date, currency, segment, multiplier,
-                                   **kwargs)
+            data[k] = self.get_kpi(k, with_date, as_datetime, currency,
+                                   segment, multiplier, **kwargs)
 
         results = []
         for idx in range(len(data['dau'])):
@@ -152,7 +182,8 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
-    def get_evt(self, evt_name, with_date=True, segment=None, **kwargs):
+    def get_evt(self, evt_name, with_date=True, as_datetime=False,
+                segment=None, **kwargs):
         """ Request event stats
 
         :param evt_name: [:class:`str`] the event name
@@ -161,6 +192,8 @@ class SwrveExportApi(SwrveApi):
             the result is a list of lists, if `with_date` setted to `True`
             the original result is modifing to list of values like
             [126.0, 116.0]
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param segment: [:class:`str`] request stats for specified segment
         :return: [:class:`list`] a list of lists with dates and values or
             a list of values, it depends on with_date arg
@@ -172,10 +205,13 @@ class SwrveExportApi(SwrveApi):
         results = data[0]['data']
         if not with_date:
             results = [i[1] for i in results]
+        elif as_datetime:
+            results = [[self.to_datetime(i[0]), i[1]] for i in results]
 
         return results
 
-    def get_evt_dau(self, evt_name, with_date=True, segment=None, **kwargs):
+    def get_evt_dau(self, evt_name, with_date=True, as_datetime=False,
+                    segment=None, **kwargs):
         """ Request event stats and divide every value with DAU
 
         :param evt_name: [:class:`str`] the event name
@@ -184,14 +220,18 @@ class SwrveExportApi(SwrveApi):
             the result is a list of lists, if `with_date` setted to `True`
             the original result is modifing to list of values like
             [126.0, 116.0]
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param segment: [:class:`str`] request stats for specified segment
         :return: [:class:`list`] a list of lists with dates and values or
             a list of values, it depends on with_date arg
         """
 
         data = {
-            'dau': self.get_kpi('dau', with_date, segment=segment, **kwargs),
-            evt_name: self.get_evt(evt_name, with_date, segment, **kwargs)
+            'dau': self.get_kpi('dau', with_date, as_datetime, segment,
+                                **kwargs),
+            evt_name: self.get_evt(evt_name, with_date, as_datetime, segment,
+                                   **kwargs)
         }
 
         results = []
@@ -224,7 +264,7 @@ class SwrveExportApi(SwrveApi):
         return results
 
     def get_payload(self, evt_name, payload_key, with_date=True,
-                    default_struct=False):
+                    as_datetime=False, default_struct=False):
         """ Request stats for the event with specified payload key
 
         :param evt_name: [:class:`str`] the event name
@@ -234,6 +274,8 @@ class SwrveExportApi(SwrveApi):
             the result is a list of lists, if `with_date` setted to `True`
             the original result is modifing to list of values like
             [126.0, 116.0]
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param default_struct: [`bool`] default response data structure are
 
             `[{'data': [['D-2017-01-01', 160], ['D-2018-01-02', 116]],
@@ -247,7 +289,7 @@ class SwrveExportApi(SwrveApi):
             'payload_key': 'level',
             'payload_value': '2'}]`
 
-            by setting default_struct = True the structure are transforming in
+            by setting default_struct = False the structure are transforming in
 
             `[{'timeline': 'D-2018-01-01', '1': 116, '2': 260},
             {'timeline': 'D-2018-01-02', '1': 116, '2': 216}]`
@@ -262,6 +304,11 @@ class SwrveExportApi(SwrveApi):
         if not with_date:
             for dct in data:
                 dct['data'] = [i[1] for i in dct['data']]
+        elif as_datetime:
+            for dct in data:
+                dct['data'] = [
+                    [self.to_datetime(i[0]), i[1]] for i in dct['data']
+                ]
 
         if default_struct:
             return data
@@ -314,13 +361,15 @@ class SwrveExportApi(SwrveApi):
 
         return results[0]['data']
 
-    def get_item_sales(self, uid=None, tag=None, currency=None,  segment=None,
-                       **kwargs):
+    def get_item_sales(self, uid=None, tag=None, as_datetime=False,
+                       currency=None, segment=None, **kwargs):
         """ Request the sales (count) of the item(s). If no uid or tag is
         specified, requests all items.
 
         :param uid: [:class:`str`] uid of the item
         :param tag: [:class:`str`] tag of the items
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param currency: [:class:`str`] if currency is None requests for all
         :param segment: request stats for specified segment
         :return: [:class:`list`] a list of dicts, one dict - one currency
@@ -330,15 +379,24 @@ class SwrveExportApi(SwrveApi):
         results = self.send_api_request(url, uid=uid, tag=tag,
                                         currency=currency, segment=segment,
                                         **kwargs)
+
+        if as_datetime:
+            for dct in results:
+                dct['data'] = [
+                    [self.to_datetime(i[0]), i[1]] for i in dct['data']
+                ]
+
         return results
 
-    def get_item_revenue(self, uid=None, tag=None, currency=None,
-                         segment=None, **kwargs):
+    def get_item_revenue(self, uid=None, tag=None, as_datetime=False,
+                         currency=None, segment=None, **kwargs):
         """ Request revenue (count * price) from the item(s). If no uid or
         tag is specified, requests all items.
 
         :param uid: [:class:`str`] uid of the item
         :param tag: [:class:`str`] tag of the items
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param currency: [:class:`str`] if currency is None requests for all
         :param segment: request stats for specified segment
         :return: [:class:`list`] a list of dicts, one dict - one currency
@@ -348,6 +406,13 @@ class SwrveExportApi(SwrveApi):
         results = self.send_api_request(url, uid=uid, tag=tag,
                                         currency=currency, segment=segment,
                                         **kwargs)
+
+        if as_datetime:
+            for dct in results:
+                dct['data'] = [
+                    [self.to_datetime(i[0]), i[1]] for i in dct['data']
+                ]
+
         return results
 
     def get_item_tag(self, tag):
