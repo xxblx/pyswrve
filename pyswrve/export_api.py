@@ -344,22 +344,32 @@ class SwrveExportApi(SwrveApi):
 
         return results
 
-    def get_user_cohorts(self, cohort_type='retention', segment=None):
+    def get_user_cohorts(self, cohort_type='retention', as_datetime=False,
+                         segment=None):
         """ Request user cohorts data
 
         :param cohort_type: [:class:`str`] the type of cohort data to be
             requested: retention, avg_sessions, avg_playtime, avg_revenue or
             total_revenue
+        :param as_datetime: [`bool`] if True convert strings with dates
+            to `datetime` object, default value is False
         :param segment: [:class:`str`] request stats for specified segment
         :return: [:class:`dict`] a dict where keys are where cohorts dates
             and values are dicts with cohort info
         """
 
+        # datetime.strptime(date_part, fmt)
         url = urljoin(self._api_url, 'cohorts/daily')
-        results = self.send_api_request(url, cohort_type=cohort_type,
-                                        segment=segment)
+        data = self.send_api_request(url, cohort_type=cohort_type,
+                                     segment=segment)
 
-        return results[0]['data']
+        results = data[0]['data']
+        if as_datetime:
+            results = {
+                datetime.strptime(k, '%Y-%m-%d'): results[k] for k in results
+            }
+
+        return results
 
     def get_item_sales(self, uid=None, tag=None, as_datetime=False,
                        currency=None, segment=None, **kwargs):
