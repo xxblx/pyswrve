@@ -1,8 +1,8 @@
 # pyswrve
 
 pyswrve is an unofficial Python wrapper for [Swrve Non-Client APIs](https://docs.swrve.com/swrves-apis/non-client-apis/):
-* [Export API](http://docs.swrve.com/developer-documentation/api-guides/non-client-apis/swrve-export-api-guide/) (ready)
-* [Items API](https://docs.swrve.com/swrves-apis/non-client-apis/swrve-items-api-guide/) (todo)
+* [Export API](http://docs.swrve.com/developer-documentation/api-guides/non-client-apis/swrve-export-api-guide/)
+* [Items API](https://docs.swrve.com/swrves-apis/non-client-apis/swrve-items-api-guide/)
 
 # Installation
 

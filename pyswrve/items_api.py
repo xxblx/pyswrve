@@ -35,17 +35,17 @@ class SwrveItemsApi(SwrveApi):
     def get_item_lst(self):
         """ Request list of project items
 
-        :return: [:class:`list`] a list with items
+        :return: [:class:`list`] a list with dicts with info about items
         """
 
         results = self.send_api_request(self._api_url)
         return results
 
-    def get_item_attrs(self, item_id):
+    def get_item_attrs(self, uid):
         """ Request list of item attributes
 
-        :return: [:class:`list`] a list with attributes
+        :return: [:class:`dict`] a dict with item attributes
         """
 
-        results = self.send_api_request(self._api_url, item=item_id)
+        results = self.send_api_request(self._api_url, item=uid)
         return results
